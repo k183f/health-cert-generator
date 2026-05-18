@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理页面 - 历史记录</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .nav-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .nav-link:hover {
+            background-color: #45a049;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        .export-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .export-btn:hover {
+            background-color: #0b7dda;
+        }
+        .no-records {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>管理页面 - 历史记录</h1>
+        
+        <!-- 导航链接 -->
+        <a href="v50.html" class="nav-link">返回主页面</a>
+        
+        <!-- 导出按钮 -->
+        <button id="exportBtn" class="export-btn">导出历史记录</button>
+        
+        <!-- 历史记录表格 -->
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>姓名</th>
+                    <th>性别</th>
+                    <th>年龄</th>
+                    <th>身份证号</th>
+                    <th>类别</th>
+                    <th>编号</th>
+                    <th>体检机构</th>
+                    <th>有效期至</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <!-- 历史记录将通过JavaScript动态添加 -->
+                <tr>
+                    <td colspan="11" class="no-records">暂无历史记录</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <script>
+        // 简单的加密函数（用于保护敏感信息）
+        function encrypt(text) {
+            if (!text) return text;
+            try {
+                // 使用简单的字符替换加密
+                let result = '';
+                for (let i = 0; i < text.length; i++) {
+                    let charCode = text.charCodeAt(i);
+                    // 移位加密
+                    charCode = (charCode + 13) % 256;
+                    result += String.fromCharCode(charCode);
+                }
+                // 转换为Base64
+                return btoa(result);
+            } catch (error) {
+                console.error('加密失败:', error);
+                return text;
+            }
+        }
+
+        // 简单的解密函数
+        function decrypt(encryptedText) {
+            if (!encryptedText) return encryptedText;
+            try {
+                // 从Base64解码
+                const text = atob(encryptedText);
+                let result = '';
+                for (let i = 0; i < text.length; i++) {
+                    let charCode = text.charCodeAt(i);
+                    // 移位解密
+                    charCode = (charCode - 13 + 256) % 256;
+                    result += String.fromCharCode(charCode);
+                }
+                return result;
+            } catch (error) {
+                console.error('解密失败:', error);
+                return encryptedText;
+            }
+        }
+
+        // 掩码身份证号
+        function maskIdNumber(idNumber) {
+            if (!idNumber) return '';
+            if (idNumber.length <= 8) return idNumber;
+            return idNumber.substring(0, 4) + '********' + idNumber.substring(idNumber.length - 4);
+        }
+
+        // 解密记录中的敏感信息
+        function decryptSensitiveData(record) {
+            if (!record) return record;
+            
+            const decryptedRecord = { ...record };
+            
+            // 只解密已标记为加密的记录
+            if (record.encrypted) {
+                if (decryptedRecord.name) {
+                    decryptedRecord.name = decrypt(decryptedRecord.name);
+                }
+                if (decryptedRecord.id_number) {
+                    decryptedRecord.id_number = decrypt(decryptedRecord.id_number);
+                }
+                
+                // 移除加密标记
+                delete decryptedRecord.encrypted;
+            }
+            
+            return decryptedRecord;
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+            setupEventListeners();
+        });
+        
+        // 加载历史记录
+        function loadHistory() {
+            const history = getHistory();
+            const tableBody = document.getElementById('historyTableBody');
+            
+            if (history.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="11" class="no-records">暂无历史记录</td></tr>';
+                return;
+            }
+            
+            // 清空表格
+            tableBody.innerHTML = '';
+            
+            // 添加历史记录行
+            history.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${record.name || ''}</td>
+                    <td>${record.gender || ''}</td>
+                    <td>${record.age || ''}</td>
+                    <td>${maskIdNumber(record.id_number) || ''}</td>
+                    <td>${record.category || ''}</td>
+                    <td>${record.number || ''}</td>
+                    <td>${record.hospital3 || ''}</td>
+                    <td>${record.expiration_date || ''}</td>
+                    <td>${record.created_at || ''}</td>
+                    <td><button class="delete-btn" data-index="${index}">删除</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // 添加删除按钮事件监听器
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    deleteHistory(index);
+                });
+            });
+        }
+        
+        // 获取历史记录
+        function getHistory() {
+            const compressedHistory = localStorage.getItem('healthHistory');
+            if (!compressedHistory) {
+                return [];
+            }
+            
+            try {
+                // 解压缩数据
+                const decompressedData = LZString.decompress(compressedHistory);
+                const history = JSON.parse(decompressedData);
+                
+                // 解密每条记录中的敏感信息
+                return history.map(decryptSensitiveData);
+            } catch (error) {
+                console.error('解压缩历史记录失败:', error);
+                // 尝试使用未压缩的数据（向后兼容）
+                try {
+                    const history = JSON.parse(compressedHistory);
+                    return history.map(decryptSensitiveData);
+                } catch (error2) {
+                    console.error('解析历史记录失败:', error2);
+                    return [];
+                }
+            }
+        }
+        
+        // 构建索引
+        function buildIndex(history) {
+            const index = {
+                byName: {},
+                byIdNumber: {},
+                byNumber: {},
+                byHospital: {},
+                byDate: []
+            };
+            
+            history.forEach(record => {
+                // 按姓名索引
+                if (record.name) {
+                    const nameKey = record.name.toLowerCase();
+                    if (!index.byName[nameKey]) {
+                        index.byName[nameKey] = [];
+                    }
+                    index.byName[nameKey].push(record.id);
+                }
+                
+                // 按身份证号索引
+                if (record.id_number) {
+                    index.byIdNumber[record.id_number] = record.id;
+                }
+                
+                // 按编号索引
+                if (record.number) {
+                    index.byNumber[record.number] = record.id;
+                }
+                
+                // 按体检机构索引
+                if (record.hospital1 || record.hospital2 || record.hospital3) {
+                    const hospitalKey = (record.hospital3 || record.hospital2 || record.hospital1).toLowerCase();
+                    if (!index.byHospital[hospitalKey]) {
+                        index.byHospital[hospitalKey] = [];
+                    }
+                    index.byHospital[hospitalKey].push(record.id);
+                }
+                
+                // 按日期排序
+                index.byDate.push({
+                    id: record.id,
+                    created_at: record.created_at
+                });
+            });
+            
+            // 按日期排序
+            index.byDate.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            return index;
+        }
+
+        // 保存历史记录
+        function saveHistory(history) {
+            // 压缩数据
+            const compressedData = LZString.compress(JSON.stringify(history));
+            localStorage.setItem('healthHistory', compressedData);
+            
+            // 构建并保存索引
+            const index = buildIndex(history);
+            const compressedIndex = LZString.compress(JSON.stringify(index));
+            localStorage.setItem('healthHistoryIndex', compressedIndex);
+        }
+        
+        // 删除历史记录
+        function deleteHistory(index) {
+            if (confirm('确定要删除这条历史记录吗？')) {
+                const history = getHistory();
+                history.splice(index, 1);
+                saveHistory(history);
+                loadHistory();
+            }
+        }
+        
+        // 导出历史记录
+        function exportHistory() {
+            const history = getHistory();
+            if (history.length === 0) {
+                alert('暂无历史记录可导出');
+                return;
+            }
+            
+            // 转换为CSV格式
+            let csvContent = "序号,姓名,性别,年龄,身份证号,类别,编号,体检机构,有效期至,创建时间\n";
+            
+            history.forEach((record, index) => {
+                csvContent += `${index + 1},${record.name || ''},${record.gender || ''},${record.age || ''},${record.id_number || ''},${record.category || ''},${record.number || ''},${record.hospital3 || ''},${record.expiration_date || ''},${record.created_at || ''}\n`;
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `健康证明历史记录_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 导入历史记录
+        function importHistory() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json,.backup';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        // 验证导入的数据格式
+                        if (!Array.isArray(importedData)) {
+                            throw new Error('导入的数据格式不正确');
+                        }
+                        
+                        // 获取现有历史记录
+                        const existingHistory = getHistory();
+                        
+                        // 合并数据，避免重复
+                        const combinedHistory = [...existingHistory];
+                        const existingIds = new Set(existingHistory.map(record => record.id));
+                        
+                        importedData.forEach(record => {
+                            if (!existingIds.has(record.id)) {
+                                combinedHistory.push(record);
+                            }
+                        });
+                        
+                        // 保存合并后的数据
+                        saveHistory(combinedHistory);
+                        
+                        // 重新加载历史记录
+                        loadHistory();
+                        
+                        alert(`成功导入 ${importedData.length} 条记录，其中 ${combinedHistory.length - existingHistory.length} 条为新记录`);
+                    } catch (error) {
+                        console.error('导入历史记录失败:', error);
+                        alert(`导入失败: ${error.message}`);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // 导出历史记录为JSON（用于备份）
+        function exportHistoryAsJson() {
+            const history = getHistory();
+            if (history.length === 0) {
+                alert('暂无历史记录可导出');
+                return;
+            }
+            
+            // 创建下载链接
+            const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `健康证明历史记录备份_${new Date().toISOString().slice(0, 10)}.json`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 导出按钮点击事件
+            document.getElementById('exportBtn').addEventListener('click', exportHistory);
+            
+            // 添加导入按钮点击事件
+            const importBtn = document.createElement('button');
+            importBtn.id = 'importBtn';
+            importBtn.textContent = '导入记录';
+            importBtn.style.marginLeft = '10px';
+            importBtn.style.padding = '10px';
+            importBtn.style.backgroundColor = '#4CAF50';
+            importBtn.style.color = 'white';
+            importBtn.style.border = 'none';
+            importBtn.style.borderRadius = '4px';
+            importBtn.style.cursor = 'pointer';
+            importBtn.addEventListener('click', importHistory);
+            
+            // 添加导出为JSON按钮点击事件
+            const exportJsonBtn = document.createElement('button');
+            exportJsonBtn.id = 'exportJsonBtn';
+            exportJsonBtn.textContent = '导出为JSON（备份）';
+            exportJsonBtn.style.marginLeft = '10px';
+            exportJsonBtn.style.padding = '10px';
+            exportJsonBtn.style.backgroundColor = '#2196F3';
+            exportJsonBtn.style.color = 'white';
+            exportJsonBtn.style.border = 'none';
+            exportJsonBtn.style.borderRadius = '4px';
+            exportJsonBtn.style.cursor = 'pointer';
+            exportJsonBtn.addEventListener('click', exportHistoryAsJson);
+            
+            // 添加按钮到页面
+            const header = document.querySelector('.admin-header');
+            if (header) {
+                header.appendChild(importBtn);
+                header.appendChild(exportJsonBtn);
+            }
+        }
+    </script>
+</body>
+</html>
