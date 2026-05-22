@@ -14,6 +14,34 @@
         
 
     </style>
+    <style>
+        :root { --bg: #f3f4f6; --card-bg: #fff; --text: #333; --text2: #666; --border: #eee; --shadow: rgba(0,0,0,0.1); }
+        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --text2: #aaa; --border: #2a2a4a; --shadow: rgba(0,0,0,0.4); }
+        body.dark-mode { background: var(--bg) !important; }
+        body.dark-mode .form-container > div { background: var(--card-bg) !important; color: var(--text) !important; }
+        body.dark-mode input, body.dark-mode textarea, body.dark-mode select { background: #1a1a2e !important; color: var(--text) !important; border-color: #2a2a4a !important; }
+        body.dark-mode table { background: var(--card-bg) !important; }
+        body.dark-mode td, body.dark-mode th { color: var(--text) !important; border-color: var(--border) !important; }
+        body.dark-mode .bg-yellow-50 { background: #1e2a3a !important; }
+        body.dark-mode .bg-blue-50 { background: #1e2a3a !important; }
+        body.dark-mode .bg-green-50 { background: #1e2a3a !important; }
+        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode p, body.dark-mode span, body.dark-mode label { color: var(--text) !important; }
+        body.dark-mode .preview-box { background: var(--card-bg) !important; border-color: var(--border) !important; }
+        body.dark-mode .result-box { background: var(--card-bg) !important; border-color: var(--border) !important; }
+        body.dark-mode .important-notice { background: #1e2a3a !important; }
+        body.dark-mode .important-notice-item { color: var(--text2) !important; }
+        body.dark-mode #cardAdminModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #authCodeAdminModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #accountAdminModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #historyModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #recycleModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #batchImportModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #passwordModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #statsModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #logModal > div { background: var(--card-bg) !important; }
+        body.dark-mode #photoModal > div { background: var(--card-bg) !important; }
+        @media print { body.dark-mode { --bg: #fff !important; } }
+    </style>
     <!-- 延迟加载非关键资源 -->
     <script defer src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
@@ -743,6 +771,163 @@
                     <tbody id="accountTableBody"></tbody>
                 </table>
             </div>
+    </div>
+    </div>
+
+    <!-- 历史记录弹窗 -->
+    <div id="historyModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 20px; color: #333;">📋 历史记录</h2>
+                <button onclick="closeHistoryModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+            <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                <input type="text" id="historySearch" placeholder="搜索姓名或身份证号..." onkeyup="renderHistoryTable()" style="flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; outline: none;">
+                <button onclick="exportHistoryCSV()" style="background: #00b894; color: white; border: none; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 12px;">📤 导出CSV</button>
+                <button onclick="clearAllHistory()" style="background: #ff6b6b; color: white; border: none; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 12px;">🗑️ 清空</button>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #dfe6e9; position: sticky; top: 0;">
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">姓名</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">身份证号</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">生成时间</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">操作人</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回收站弹窗 -->
+    <div id="recycleModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 20px; color: #333;">🗑️ 回收站</h2>
+                <button onclick="closeRecycleModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #dfe6e9; position: sticky; top: 0;">
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">姓名</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">身份证号</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">删除时间</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recycleTableBody"></tbody>
+                </table>
+            </div>
+            <button onclick="emptyRecycleBin()" style="width: 100%; margin-top: 10px; padding: 8px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">清空回收站</button>
+        </div>
+    </div>
+
+    <!-- 批量导入弹窗 -->
+    <div id="batchImportModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 20px; color: #333;">📤 批量导入</h2>
+                <button onclick="closeBatchImport()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+            <p style="font-size: 12px; color: #888; margin-bottom: 8px;">每行一个，格式：姓名 身份证号（用空格隔开）</p>
+            <textarea id="batchInput" placeholder="张三 110101199001011234&#10;李四 110101199002022345" style="width: 100%; height: 180px; padding: 10px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; resize: vertical; outline: none; box-sizing: border-box;"></textarea>
+            <div style="margin-top: 10px; display: flex; gap: 8px;">
+                <button onclick="processBatchImport()" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">导入并生成</button>
+                <button onclick="document.getElementById('csvFileInput').click()" style="padding: 10px 16px; background: #00b894; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">📁 选择CSV文件</button>
+                <input type="file" id="csvFileInput" accept=".csv,.txt" onchange="importCSVFile(event)" style="display: none;">
+            </div>
+            <div id="batchResult" style="margin-top: 10px; font-size: 13px; color: #00b894; display: none;"></div>
+        </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div id="passwordModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 380px; width: 95%; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 20px; color: #333;">🔑 修改密码</h2>
+                <button onclick="closePasswordModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+            <input type="password" id="oldPassword" placeholder="当前密码" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; outline: none;">
+            <input type="password" id="newPassword" placeholder="新密码" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; outline: none;">
+            <input type="password" id="confirmNewPassword" placeholder="确认新密码" onkeypress="if(event.key==='Enter')doChangePassword()" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
+            <button onclick="doChangePassword()" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">确认修改</button>
+            <p id="passwordMsg" style="font-size: 13px; margin-top: 8px; display: none;"></p>
+        </div>
+    </div>
+
+    <!-- 使用统计弹窗 -->
+    <div id="statsModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; width: 95%; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 20px; color: #333;">📊 使用统计</h2>
+                <button onclick="closeStatsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 15px; text-align: center;">
+                    <p style="font-size: 11px; color: rgba(255,255,255,0.8); margin: 0 0 5px;">今日</p>
+                    <p id="statsToday" style="font-size: 28px; color: white; font-weight: bold; margin: 0;">0</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 12px; padding: 15px; text-align: center;">
+                    <p style="font-size: 11px; color: rgba(255,255,255,0.8); margin: 0 0 5px;">本周</p>
+                    <p id="statsWeek" style="font-size: 28px; color: white; font-weight: bold; margin: 0;">0</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%); border-radius: 12px; padding: 15px; text-align: center;">
+                    <p style="font-size: 11px; color: rgba(255,255,255,0.8); margin: 0 0 5px;">本月</p>
+                    <p id="statsMonth" style="font-size: 28px; color: white; font-weight: bold; margin: 0;">0</p>
+                </div>
+            </div>
+            <div style="background: #f8f9fa; border-radius: 12px; padding: 15px;">
+                <p style="font-size: 13px; color: #333; margin: 0 0 8px;">总生成记录：<strong id="statsTotal">0</strong></p>
+                <p style="font-size: 13px; color: #333; margin: 0 0 8px;">注册用户数：<strong id="statsUsers">0</strong></p>
+                <p style="font-size: 13px; color: #333; margin: 0;">操作日志总数：<strong id="statsLogs">0</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作日志弹窗 -->
+    <div id="logModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 20px; color: #333;">📋 操作日志</h2>
+                <button onclick="closeLogModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+            <div style="margin-bottom: 12px;"><button onclick="clearAllLogs()" style="background: #ff6b6b; color: white; border: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px;">清空日志</button></div>
+            <div style="max-height: 450px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #dfe6e9; position: sticky; top: 0;">
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">时间</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">用户</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">操作</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">详情</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 相片上传弹窗 -->
+    <div id="photoModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; width: 95%; padding: 24px; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 20px; color: #333;">🖼️ 上传相片</h2>
+                <button onclick="closePhotoModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+            <div id="photoPreview" style="width: 120px; height: 150px; border: 2px dashed #ddd; border-radius: 8px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f8f9fa;">
+                <span id="photoPlaceholder" style="color: #ccc; font-size: 12px;">点击下方上传</span>
+                <img id="photoImage" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <input type="file" id="photoFileInput" accept="image/*" onchange="previewSelectedPhoto(event)" style="display: none;">
+            <button onclick="document.getElementById('photoFileInput').click()" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 8px;">📁 选择图片</button>
+            <button onclick="savePhoto()" style="width: 100%; padding: 10px; background: #00b894; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 8px;">✅ 确认上传</button>
+            <button onclick="removePhoto()" style="width: 100%; padding: 10px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">🗑️ 移除相片</button>
         </div>
     </div>
     <script>
@@ -958,7 +1143,12 @@
                 const adminBtn = document.getElementById('adminBtn');
                 if (adminBtn) adminBtn.style.display = 'block';
             }
+            const topBar = document.getElementById('topBar');
+            if (topBar) topBar.style.display = 'flex';
+            const userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = '👤 ' + user.username + (user.isAdmin ? '（总号）' : '');
             document.getElementById('loginOverlay').style.display = 'none';
+            addLog('登录', user.username + (user.isAdmin ? '（总号）' : ''));
         }
 
         function handleRegister() {
@@ -1005,6 +1195,7 @@
             document.getElementById('regPassword').value = '';
             document.getElementById('regConfirmPassword').value = '';
             document.getElementById('regAuthCode').value = '';
+            addLog('注册账号', username);
             setTimeout(() => switchLoginTab('login'), 1500);
         }
 
@@ -1183,13 +1374,383 @@
         function closeAccountAdmin() {
             document.getElementById('accountAdminModal').style.display = 'none';
         }
+
+        // === 退出登录 ===
+        function handleLogout() {
+            if (!confirm('确定要退出登录吗？')) return;
+            currentUser = null;
+            localStorage.removeItem('healthCurrentUser');
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('topBar').style.display = 'none';
+            document.getElementById('adminBtn').style.display = 'none';
+        }
+
+        // === 深色模式 ===
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('darkModeBtn');
+            const isDark = document.body.classList.contains('dark-mode');
+            btn.textContent = isDark ? '☀️ 亮色' : '🌙 深色';
+            localStorage.setItem('healthDarkMode', isDark ? '1' : '0');
+        }
+        (function initDarkMode() {
+            if (localStorage.getItem('healthDarkMode') === '1') {
+                document.body.classList.add('dark-mode');
+                const btn = document.getElementById('darkModeBtn');
+                if (btn) btn.textContent = '☀️ 亮色';
+            }
+        })();
+
+        // === 历史记录 ===
+        function getHistory() {
+            try { return JSON.parse(localStorage.getItem('healthHistory') || '[]'); } catch(e) { return []; }
+        }
+        function saveHistory(h) { localStorage.setItem('healthHistory', JSON.stringify(h)); }
+        function addHistory(name, idNumber) {
+            if (!currentUser) return;
+            const h = getHistory();
+            h.push({ name, idNumber, time: Date.now(), user: currentUser.username });
+            saveHistory(h);
+        }
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            if (!tbody) return;
+            let list = getHistory();
+            const q = (document.getElementById('historySearch')?.value || '').trim().toLowerCase();
+            if (q) list = list.filter(i => i.name.toLowerCase().includes(q) || i.idNumber.includes(q));
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #999;">暂无记录</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.slice().reverse().slice(0, 500).map((item, idx) => {
+                const t = new Date(item.time).toLocaleString('zh-CN');
+                const realIdx = list.length - 1 - idx;
+                return '<tr>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;">' + item.name + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace;">' + item.idNumber + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + t + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;">' + (item.user || '-') + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;"><button onclick="deleteHistoryItem(' + realIdx + ')" style="background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 11px;">删除</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+        function deleteHistoryItem(idx) {
+            let list = getHistory();
+            if (idx >= 0 && idx < list.length) {
+                const item = list[idx];
+                addLog('删除历史记录', item.name + ' ' + item.idNumber);
+                // 移到回收站
+                const r = getRecycle();
+                r.push({ name: item.name, idNumber: item.idNumber, deletedAt: Date.now() });
+                saveRecycle(r);
+                list.splice(idx, 1);
+                saveHistory(list);
+                renderHistoryTable();
+            }
+        }
+        function openHistoryModal() {
+            document.getElementById('historyModal').style.display = 'flex';
+            document.getElementById('historySearch').value = '';
+            renderHistoryTable();
+        }
+        function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+        function clearAllHistory() {
+            if (!confirm('确定要清空所有历史记录吗？')) return;
+            const h = getHistory();
+            h.forEach(item => {
+                const r = getRecycle();
+                r.push({ name: item.name, idNumber: item.idNumber, deletedAt: Date.now() });
+                saveRecycle(r);
+            });
+            saveHistory([]);
+            addLog('清空历史记录', '共清空 ' + h.length + ' 条');
+            renderHistoryTable();
+        }
+        function exportHistoryCSV() {
+            const list = getHistory();
+            if (list.length === 0) { alert('暂无数据可导出'); return; }
+            let csv = '姓名,身份证号,生成时间,操作人\n';
+            list.forEach(i => {
+                csv += i.name + ',' + i.idNumber + ',' + new Date(i.time).toLocaleString('zh-CN') + ',' + (i.user || '') + '\n';
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = '历史记录_' + new Date().toLocaleDateString('zh-CN') + '.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // === 回收站 ===
+        function getRecycle() {
+            try { return JSON.parse(localStorage.getItem('healthRecycle') || '[]'); } catch(e) { return []; }
+        }
+        function saveRecycle(r) { localStorage.setItem('healthRecycle', JSON.stringify(r)); }
+        function renderRecycleTable() {
+            const tbody = document.getElementById('recycleTableBody');
+            if (!tbody) return;
+            const list = getRecycle();
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #999;">回收站为空</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.slice().reverse().map((item, idx) => {
+                const t = new Date(item.deletedAt).toLocaleString('zh-CN');
+                const realIdx = list.length - 1 - idx;
+                return '<tr>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;">' + item.name + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace;">' + item.idNumber + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + t + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;"><button onclick="restoreRecycleItem(' + realIdx + ')" style="background: #00b894; color: white; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 11px; margin-right: 4px;">恢复</button><button onclick="deleteRecycleItem(' + realIdx + ')" style="background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 11px;">彻底删除</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+        function restoreRecycleItem(idx) {
+            const r = getRecycle();
+            if (idx >= 0 && idx < r.length) {
+                const item = r[idx];
+                const h = getHistory();
+                h.push({ name: item.name, idNumber: item.idNumber, time: Date.now(), user: currentUser?.username || '' });
+                saveHistory(h);
+                r.splice(idx, 1);
+                saveRecycle(r);
+                addLog('恢复记录', item.name + ' ' + item.idNumber);
+                renderRecycleTable();
+            }
+        }
+        function deleteRecycleItem(idx) {
+            const r = getRecycle();
+            if (idx >= 0 && idx < r.length) {
+                if (!confirm('确定要彻底删除该记录吗？')) return;
+                r.splice(idx, 1);
+                saveRecycle(r);
+                renderRecycleTable();
+            }
+        }
+        function emptyRecycleBin() {
+            if (!confirm('确定要清空回收站吗？此操作不可恢复！')) return;
+            addLog('清空回收站', '共清空 ' + getRecycle().length + ' 条');
+            saveRecycle([]);
+            renderRecycleTable();
+        }
+        function openRecycleModal() {
+            document.getElementById('recycleModal').style.display = 'flex';
+            renderRecycleTable();
+        }
+        function closeRecycleModal() { document.getElementById('recycleModal').style.display = 'none'; }
+
+        // === 批量导入导出 ===
+        function openBatchImport() {
+            document.getElementById('batchImportModal').style.display = 'flex';
+            document.getElementById('batchInput').value = '';
+            document.getElementById('batchResult').style.display = 'none';
+        }
+        function closeBatchImport() { document.getElementById('batchImportModal').style.display = 'none'; }
+        function processBatchImport() {
+            const input = document.getElementById('batchInput').value.trim();
+            if (!input) { alert('请输入数据'); return; }
+            const lines = input.split('\n').filter(l => l.trim());
+            let success = 0, fail = 0;
+            lines.forEach(line => {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 2) {
+                    const name = parts[0].trim();
+                    const idNumber = parts.slice(1).join('').trim();
+                    if (name && idNumber && idNumber.length >= 15) {
+                        document.getElementById('name').value = name;
+                        document.getElementById('idNumber').value = idNumber;
+                        document.getElementById('idNumber').dispatchEvent(new Event('input'));
+                        addHistory(name, idNumber);
+                        success++;
+                    } else { fail++; }
+                } else { fail++; }
+            });
+            const resultDiv = document.getElementById('batchResult');
+            resultDiv.style.display = 'block';
+            resultDiv.style.color = fail > 0 ? '#e17055' : '#00b894';
+            resultDiv.textContent = '✅ 成功导入 ' + success + ' 条' + (fail > 0 ? '，❌ 失败 ' + fail + ' 条（请检查格式）' : '');
+            addLog('批量导入', '成功 ' + success + ' 条，失败 ' + fail + ' 条');
+            if (success > 0) renderHistoryTable();
+        }
+        function importCSVFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                document.getElementById('batchInput').value = text;
+                document.getElementById('batchResult').style.display = 'none';
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // === 修改密码 ===
+        function showPasswordChange() {
+            document.getElementById('passwordModal').style.display = 'flex';
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            document.getElementById('passwordMsg').style.display = 'none';
+        }
+        function closePasswordModal() { document.getElementById('passwordModal').style.display = 'none'; }
+        function doChangePassword() {
+            const oldPwd = document.getElementById('oldPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmNewPassword').value;
+            const msg = document.getElementById('passwordMsg');
+            if (!oldPwd || !newPwd || !confirmPwd) {
+                msg.style.display = 'block'; msg.style.color = '#ff6b6b'; msg.textContent = '请填写所有字段';
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                msg.style.display = 'block'; msg.style.color = '#ff6b6b'; msg.textContent = '两次密码不一致';
+                return;
+            }
+            if (newPwd.length < 4) {
+                msg.style.display = 'block'; msg.style.color = '#ff6b6b'; msg.textContent = '密码至少4位';
+                return;
+            }
+            let accounts = getAccounts();
+            const acc = accounts.find(a => a.username === currentUser.username);
+            if (!acc || acc.password !== oldPwd) {
+                msg.style.display = 'block'; msg.style.color = '#ff6b6b'; msg.textContent = '当前密码错误';
+                return;
+            }
+            acc.password = newPwd;
+            saveAccounts(accounts);
+            addLog('修改密码', currentUser.username);
+            msg.style.display = 'block'; msg.style.color = '#00b894'; msg.textContent = '✅ 密码修改成功';
+            setTimeout(closePasswordModal, 1000);
+        }
+
+        // === 打印 ===
+        function printPreview() {
+            const el = document.getElementById('preview1');
+            if (!el) { alert('无预览内容可打印'); return; }
+            const win = window.open('', '_blank');
+            win.document.write('<html><head><title>打印</title><style>body{margin:0}@page{size:auto;margin:10mm}</style></head><body>' + el.innerHTML + '</body></html>');
+            win.document.close();
+            setTimeout(function() { win.print(); win.close(); }, 500);
+        }
+
+        // === 使用统计 ===
+        function openStatsModal() {
+            document.getElementById('statsModal').style.display = 'flex';
+            const history = getHistory();
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+            const today = history.filter(i => i.time >= todayStart).length;
+            const week = history.filter(i => i.time >= weekStart).length;
+            const month = history.filter(i => i.time >= monthStart).length;
+            document.getElementById('statsToday').textContent = today;
+            document.getElementById('statsWeek').textContent = week;
+            document.getElementById('statsMonth').textContent = month;
+            document.getElementById('statsTotal').textContent = history.length;
+            document.getElementById('statsUsers').textContent = getSubAccounts().length + 1;
+            document.getElementById('statsLogs').textContent = getLogs().length;
+            addLog('查看使用统计', '今日' + today + ' 本周' + week + ' 本月' + month);
+        }
+        function closeStatsModal() { document.getElementById('statsModal').style.display = 'none'; }
+
+        // === 操作日志 ===
+        function getLogs() {
+            try { return JSON.parse(localStorage.getItem('healthLogs') || '[]'); } catch(e) { return []; }
+        }
+        function saveLogs(l) { localStorage.setItem('healthLogs', JSON.stringify(l)); }
+        function addLog(action, detail) {
+            if (!currentUser) return;
+            const logs = getLogs();
+            logs.push({ time: Date.now(), user: currentUser.username, action: action || '', detail: detail || '' });
+            if (logs.length > 2000) logs.splice(0, logs.length - 2000);
+            saveLogs(logs);
+        }
+        function renderLogTable() {
+            const tbody = document.getElementById('logTableBody');
+            if (!tbody) return;
+            const logs = getLogs();
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #999;">暂无操作日志</td></tr>';
+                return;
+            }
+            tbody.innerHTML = logs.slice().reverse().slice(0, 300).map(log => {
+                return '<tr>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + new Date(log.time).toLocaleString('zh-CN') + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;">' + log.user + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;">' + log.action + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px; color: #666;">' + log.detail + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+        function openLogModal() {
+            document.getElementById('logModal').style.display = 'flex';
+            renderLogTable();
+        }
+        function closeLogModal() { document.getElementById('logModal').style.display = 'none'; }
+        function clearAllLogs() {
+            if (!confirm('确定要清空所有操作日志吗？')) return;
+            saveLogs([]);
+            renderLogTable();
+        }
+
+        // === 相片上传 ===
+        let tempPhotoData = null;
+        function openPhotoModal() {
+            document.getElementById('photoModal').style.display = 'flex';
+            document.getElementById('photoImage').style.display = 'none';
+            document.getElementById('photoPlaceholder').style.display = 'block';
+            tempPhotoData = null;
+        }
+        function closePhotoModal() { document.getElementById('photoModal').style.display = 'none'; }
+        function previewSelectedPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempPhotoData = e.target.result;
+                document.getElementById('photoImage').src = tempPhotoData;
+                document.getElementById('photoImage').style.display = 'block';
+                document.getElementById('photoPlaceholder').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+        function savePhoto() {
+            if (!tempPhotoData) { alert('请先选择图片'); return; }
+            localStorage.setItem('healthPhoto', tempPhotoData);
+            addLog('上传相片', '相片已更新');
+            alert('✅ 相片已保存');
+            closePhotoModal();
+        }
+        function removePhoto() {
+            localStorage.removeItem('healthPhoto');
+            document.getElementById('photoImage').style.display = 'none';
+            document.getElementById('photoPlaceholder').style.display = 'block';
+            tempPhotoData = null;
+            addLog('移除相片', '相片已删除');
+            alert('相片已移除');
+            closePhotoModal();
+        }
+        function getPhotoData() { return localStorage.getItem('healthPhoto'); }
     </script>
     <!-- 主内容界面 -->
     <div id="mainContent" class="min-w-full whitespace-nowrap overflow-x-auto">
-        <div id="adminBtn" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 100;">
+        <div id="topBar" style="display: none; position: fixed; top: 0; left: 0; right: 0; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9998; padding: 0 16px; align-items: center; justify-content: space-between;">
+            <span id="userDisplay" style="color: white; font-size: 13px; font-weight: bold;"></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button onclick="toggleDarkMode()" id="darkModeBtn" style="background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px;">🌙 深色</button>
+                <button onclick="showPasswordChange()" style="background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px;">🔑 改密</button>
+                <button onclick="handleLogout()" style="background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px;">退出</button>
+            </div>
+        </div>
+        <div id="adminBtn" style="display: none; position: fixed; top: 44px; right: 10px; z-index: 100;">
             <button onclick="openCardAdmin()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-right: 8px;">卡密管理</button>
             <button onclick="openAuthCodeAdmin()" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-right: 8px;">主号管理</button>
-            <button onclick="openAccountAdmin()" style="background: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">子账号管理</button>
+            <button onclick="openAccountAdmin()" style="background: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-right: 8px;">子账号管理</button>
+            <button onclick="openStatsModal()" style="background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-right: 8px;">使用统计</button>
+            <button onclick="openLogModal()" style="background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">操作日志</button>
         </div>
         <div class="form-container">
             <form id="healthForm">
@@ -1197,6 +1758,9 @@
                     <textarea id="pasteArea" placeholder="请粘贴姓名和身份证号，例如：张三 110101199001011234" class="w-full py-1 px-2 border rounded text-xs mb-1"></textarea>
                     <div class="text-left flex gap-2">
                         <button onclick="parsePastedText()" class="bg-blue-500 text-white py-0.5 px-3 rounded text-xs">粘贴</button>
+                        <button onclick="openHistoryModal()" style="background:#6c5ce7;color:white;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;">📋 记录</button>
+                        <button onclick="openRecycleModal()" style="background:#e17055;color:white;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;">🗑️ 回收</button>
+                        <button onclick="openBatchImport()" style="background:#00b894;color:white;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;">📤 批量</button>
                     </div>
                     <script>
                         document.getElementById('pasteArea').addEventListener('paste', function() {
@@ -2273,6 +2837,12 @@
                 <label for="qrUploadInput2Form" style="flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#1e40af; color:#fff; border:none; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px;">
                     <i class="fa fa-upload"></i> 上传二维码
                 </label>
+                <button onclick="openPhotoModal()" style="flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#e17055; color:#fff; border:none; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                    🖼️ 相片
+                </button>
+                <button onclick="printPreview()" style="flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#2d3436; color:#fff; border:none; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                    🖨️ 打印
+                </button>
             </div>
             <div class="health-certificate p-4 rounded-md mb-8" style="margin-left: 0; position: relative;">
                 <!-- 透明塑封效果层 -->
@@ -2900,10 +3470,12 @@
             
             // 导出预览框1
             addEventListeners(exportPreview1Button, function() {
-                // 选择预览容器中的健康证明元素
-                const element = document.querySelector('#previewContainer .health-certificate');
-                if (element) {
-                    exportElement(element, '预览框1-从业人员健康证明.png');
+                const el = document.querySelector('#previewContainer .health-certificate');
+                if (el) {
+                    exportElement(el, '预览框1-从业人员健康证明.png');
+                    const n = document.getElementById('name')?.value || document.getElementById('previewName')?.textContent || '';
+                    const id = document.getElementById('idNumber')?.value || document.getElementById('previewIdNumber')?.textContent || '';
+                    if (n && id) addHistory(n, id);
                 } else {
                     alert('未找到预览框1元素');
                 }
@@ -2911,10 +3483,12 @@
             
             // 导出预览框2
             addEventListeners(exportPreview2Button, function() {
-                // 选择预览容器中的第一个官方证明元素
                 const elements = document.querySelectorAll('#previewContainer .official-certificate');
                 if (elements.length > 0) {
                     exportElement(elements[0], '预览框2-江苏省从业人员健康检查合格证明.png');
+                    const n = document.getElementById('name')?.value || document.getElementById('previewName')?.textContent || '';
+                    const id = document.getElementById('idNumber')?.value || document.getElementById('previewIdNumber')?.textContent || '';
+                    if (n && id) addHistory(n, id);
                 } else {
                     alert('未找到预览框2元素');
                 }
@@ -2922,10 +3496,12 @@
             
             // 导出预览框3
             addEventListeners(exportPreview3Button, function() {
-                // 选择预览容器中的第二个官方证明元素
                 const elements = document.querySelectorAll('#previewContainer .official-certificate');
                 if (elements.length > 1) {
                     exportElement(elements[1], '预览框3-从业人员健康检查合格证明.png');
+                    const n = document.getElementById('name')?.value || document.getElementById('previewName')?.textContent || '';
+                    const id = document.getElementById('idNumber')?.value || document.getElementById('previewIdNumber')?.textContent || '';
+                    if (n && id) addHistory(n, id);
                 } else {
                     alert('未找到预览框3元素');
                 }
@@ -6628,15 +7204,18 @@
             
             // 设置默认照片占位符，确保图片元素默认处于显示状态
             const defaultPhotoUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="390" viewBox="0 0 100 130"><rect width="100" height="130" fill="%23f0f0f0"/></svg>';
+            // 从localStorage获取用户上传的相片
+            const savedPhoto = getPhotoData ? getPhotoData() : null;
+            const photoUrl = savedPhoto || defaultPhotoUrl;
             // 生成默认二维码图片（无提示文字）
             const defaultQrCodeUrl = 'data:image/gif;base64,R0lGODdhdAB0AIAAAAAAAP///ywAAAAAdAB0AAAC/4yPqcvtD6OctNqLs968+w+G4kiW5omm6sq27gvH8kzX9o3n+s73/g90AYbEovGIRCABSiJjCY0yR9KqsXnEThXW7jbktWqL2mdYSjqjD8vyQh1NOy/k91xSt+TB98rejddH8fdBGDhkhjhhGMHI4fjACMkluFjpsVcFGKDJ1pe5ZjCZARrnqSgayvnJapqKygfb+fo1uyrbCrUJUqp7WqvaO5b0K4fregt8fGW33FZMlftMuzmd0Gs9ioFNTA1NKyndnWys7OuNnhzuPK5NJ571Td7MnG7rrgdfP58+vOy/D58ffcLkAawW7FIHbvHsKcxGMFe5bQ8l0qMIi5dCCP/rzCX6MmjjBoG75HXECLKQSAcnDbo8lBITHIj/TM4cp/FmQIsOdZK05JMnv6FBf8IMirAmOJ9B3mVsGsMoVBFSp+aM2SPMx6Q7ny5tOPSqLa4HX6prt5KUl602wXakifXR2ottu2K9l/Zq2Xxez3ahwTBupIpqAOtD+VHrjMCI6SlWAfcx0bSjrImNiKwgS8o4VbqFQ3Zw372x7ErW3KByZ8irJytNnXD0Cst1S1LKnPcE7Z4eRZ8L+2K3696bccsWgnlfaN62WwQWjjp6bhPPW0t/XdWzubG1u/f78VYo9Ok1wmO3Tt5wX7ikm/MwT9zv3fRAi7L9Xlz57KLrhXLsbI0Cf/299h9YLAg4H4G+ZaeBVAwOB9CDBQqWn1znITORUxQ2Ip4qGfK14YRcCafXL+z5dt816B2nFjufsdjSbfrht1By7pkFX4olfmWXiHTJGGNpEXZooImE/RagjXXl6BiA0bjYo5EDziifhPUNeSGV42Gom5K8MWbWjVR5ORyYNIoppJRR8kiaaizuWCWRpvn3YwoOHtZkkTB9OBCUiTlZ4ZMh1rklklcK2hibeVLp45j8tZkciV0+quaIcyFHqaJfXuqcgJBCyZ1Voo5Kaqmmnopqqqquymqrrr4Ka6yyzkprrbbeiqsLBQAAOw==';
             
             // 更新所有照片预览元素
-            previewPhoto.innerHTML = `<img src="${defaultPhotoUrl}">`;
-            previewResultPhoto.innerHTML = `<img src="${defaultPhotoUrl}">`;
-            resultPhoto.innerHTML = `<img src="${defaultPhotoUrl}">`;
-            previewPhoto1.innerHTML = `<img src="${defaultPhotoUrl}">`;
-            previewPhoto3.innerHTML = `<img src="${defaultPhotoUrl}">`;
+            previewPhoto.innerHTML = `<img src="${photoUrl}">`;
+            previewResultPhoto.innerHTML = `<img src="${photoUrl}">`;
+            resultPhoto.innerHTML = `<img src="${photoUrl}">`;
+            previewPhoto1.innerHTML = `<img src="${photoUrl}">`;
+            previewPhoto3.innerHTML = `<img src="${photoUrl}">`;
             
             // 设置照片位置
             previewPhoto1.style.position = 'absolute';
