@@ -606,14 +606,33 @@
     </style>
 </head>
 <body class="bg-gray-100 flex justify-center items-center min-h-screen">
-    <!-- 密码登录框 -->
+    <!-- 登录/注册框 -->
     <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 10000; display: flex; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%;">
-            <h2 style="margin-bottom: 10px; color: #333; font-size: 24px;">🔐 健康证明生成器</h2>
-            <p style="color: #888; font-size: 13px; margin-bottom: 20px;">请输入密码或卡密登录</p>
-            <input type="password" id="passwordInput" placeholder="请输入密码或卡密" onkeypress="if(event.key==='Enter')checkPassword()" style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 20px; box-sizing: border-box; text-align: center;">
-            <button onclick="checkPassword()" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-bottom: 15px;">登录</button>
-            <p id="loginError" style="color: #ff6b6b; font-size: 14px; display: none;">密码或卡密错误，请重试</p>
+        <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%;">
+            <h2 style="margin-bottom: 5px; color: #333; font-size: 22px;">🔐 健康证明生成器</h2>
+            <p style="color: #888; font-size: 12px; margin-bottom: 15px;">注册需要授权码，请联系管理员获取</p>
+
+            <div style="display: flex; margin-bottom: 18px; border-bottom: 2px solid #eee;">
+                <div id="loginTab" onclick="switchLoginTab('login')" style="flex: 1; padding: 8px; cursor: pointer; font-size: 14px; color: #667eea; border-bottom: 2px solid #667eea; font-weight: bold;">登录</div>
+                <div id="registerTab" onclick="switchLoginTab('register')" style="flex: 1; padding: 8px; cursor: pointer; font-size: 14px; color: #999;">注册</div>
+            </div>
+
+            <div id="loginForm">
+                <input type="text" id="loginUsername" placeholder="用户名" onkeypress="if(event.key==='Enter')handleLogin()" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; text-align: center;">
+                <input type="password" id="loginPassword" placeholder="密码" onkeypress="if(event.key==='Enter')handleLogin()" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; text-align: center;">
+                <button onclick="handleLogin()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; margin-bottom: 10px;">登录</button>
+                <p id="loginError" style="color: #ff6b6b; font-size: 13px; display: none;"></p>
+            </div>
+
+            <div id="registerForm" style="display: none;">
+                <input type="text" id="regUsername" placeholder="用户名" onkeypress="if(event.key==='Enter')handleRegister()" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; text-align: center;">
+                <input type="password" id="regPassword" placeholder="密码" onkeypress="if(event.key==='Enter')handleRegister()" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; text-align: center;">
+                <input type="password" id="regConfirmPassword" placeholder="确认密码" onkeypress="if(event.key==='Enter')handleRegister()" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; text-align: center;">
+                <input type="text" id="regAuthCode" placeholder="授权码" onkeypress="if(event.key==='Enter')handleRegister()" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; text-align: center;">
+                <button onclick="handleRegister()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; margin-bottom: 10px;">注册</button>
+                <p id="registerError" style="color: #ff6b6b; font-size: 13px; display: none;"></p>
+                <p id="registerSuccess" style="color: #00b894; font-size: 13px; display: none;"></p>
+            </div>
         </div>
     </div>
 
@@ -668,73 +687,329 @@
             </div>
         </div>
     </div>
+
+    <!-- 主号管理弹窗 -->
+    <div id="authCodeAdminModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 20px; color: #333;">🔑 主号管理 <span style="font-size: 12px; color: #999; font-weight: normal;">（主号用于给子账号注册）</span></h2>
+                <button onclick="closeAuthCodeAdmin()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+
+            <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <h3 style="font-size: 14px; color: #555; margin-bottom: 12px;">生成主号</h3>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <button onclick="generateAuthCode()" style="background: #6c5ce7; color: white; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 13px;">生成主号</button>
+                    <input type="text" id="customAuthCodeInput" placeholder="自定义主号" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; width: 150px;">
+                    <button onclick="addCustomAuthCode()" style="background: #0984e3; color: white; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 13px;">添加自定义</button>
+                </div>
+            </div>
+
+            <div style="max-height: 350px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #dfe6e9; position: sticky; top: 0;">
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">主号</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">状态</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">有效期</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">生成时间</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="authCodeTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 子账号管理弹窗 -->
+    <div id="accountAdminModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 20px; color: #333;">📋 子账号管理 <span style="font-size: 12px; color: #999; font-weight: normal;">（所有注册用户列表）</span></h2>
+                <button onclick="closeAccountAdmin()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 4px 8px;">✕</button>
+            </div>
+
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #dfe6e9; position: sticky; top: 0;">
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">用户名</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">密码</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">注册时间</th>
+                            <th style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #eee;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accountTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     <script>
-        const MASTER_PASSWORD = '86480356';
-        let isAdmin = false;
+        let currentUser = null;
 
-        function checkPassword() {
-            const input = document.getElementById('passwordInput').value.trim();
-            if (!input) return;
+        function switchLoginTab(tab) {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            if (tab === 'login') {
+                loginTab.style.color = '#667eea';
+                loginTab.style.borderBottom = '2px solid #667eea';
+                loginTab.style.fontWeight = 'bold';
+                registerTab.style.color = '#999';
+                registerTab.style.borderBottom = 'none';
+                registerTab.style.fontWeight = 'normal';
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                registerTab.style.color = '#00b894';
+                registerTab.style.borderBottom = '2px solid #00b894';
+                registerTab.style.fontWeight = 'bold';
+                loginTab.style.color = '#999';
+                loginTab.style.borderBottom = 'none';
+                loginTab.style.fontWeight = 'normal';
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('registerError').style.display = 'none';
+            document.getElementById('registerSuccess').style.display = 'none';
+        }
 
-            if (input === MASTER_PASSWORD) {
-                isAdmin = true;
+        function getAccounts() {
+            try { return JSON.parse(localStorage.getItem('healthAccounts') || '[]'); } catch { return []; }
+        }
+
+        function saveAccounts(accounts) {
+            localStorage.setItem('healthAccounts', JSON.stringify(accounts));
+        }
+
+        function initAdminAccount() {
+            const accounts = getAccounts();
+            if (!accounts.some(a => a.username === 'admin')) {
+                accounts.push({ username: 'admin', password: '86480356', isAdmin: true, createdAt: Date.now() });
+                saveAccounts(accounts);
+            }
+        }
+        initAdminAccount();
+
+        function getAuthCodes() {
+            try { return JSON.parse(localStorage.getItem('healthAuthCodes') || '[]'); } catch { return []; }
+        }
+
+        function saveAuthCodes(codes) {
+            localStorage.setItem('healthAuthCodes', JSON.stringify(codes));
+        }
+
+        function initDefaultAuthCode() {
+            const codes = getAuthCodes();
+            if (codes.length === 0) {
+                codes.push({
+                    code: 'AUTH8888',
+                    createdAt: Date.now(),
+                    expiresAt: null,
+                    status: 'active'
+                });
+                saveAuthCodes(codes);
+            }
+        }
+        initDefaultAuthCode();
+
+        function generateAuthCodeKey() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let key = '';
+            for (let i = 0; i < 8; i++) {
+                key += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return 'AUTH-' + key;
+        }
+
+        function generateAuthCode() {
+            const codes = getAuthCodes();
+            let code;
+            do { code = generateAuthCodeKey(); } while (codes.some(c => c.code === code));
+            codes.push({
+                code,
+                createdAt: Date.now(),
+                expiresAt: null,
+                status: 'active'
+            });
+            saveAuthCodes(codes);
+            renderAuthCodeTable();
+        }
+
+        function addCustomAuthCode() {
+            const input = document.getElementById('customAuthCodeInput');
+            const val = input.value.trim();
+            if (!val) return;
+            const codes = getAuthCodes();
+            if (codes.some(c => c.code === val)) return;
+            codes.push({
+                code: val,
+                createdAt: Date.now(),
+                expiresAt: null,
+                status: 'active'
+            });
+            saveAuthCodes(codes);
+            renderAuthCodeTable();
+            input.value = '';
+        }
+
+        function validateAuthCode(code) {
+            const codes = getAuthCodes();
+            const found = codes.find(c => c.code === code);
+            if (!found) return false;
+            if (found.status !== 'active') return false;
+            if (found.expiresAt && Date.now() > found.expiresAt) return false;
+            return true;
+        }
+
+        function renderAuthCodeTable() {
+            const tbody = document.getElementById('authCodeTableBody');
+            if (!tbody) return;
+            const codes = getAuthCodes();
+            const statusLabels = { active: '正常', frozen: '已冻结', blacklisted: '已拉黑' };
+            const statusColors = { active: '#00b894', frozen: '#fdcb6e', blacklisted: '#ff6b6b' };
+            tbody.innerHTML = codes.slice().reverse().map(item => {
+                let expireText = '永久有效';
+                if (item.expiresAt) {
+                    const remaining = Math.ceil((item.expiresAt - Date.now()) / (24 * 60 * 60 * 1000));
+                    expireText = remaining > 0 ? '剩余 ' + remaining + ' 天' : '已过期';
+                }
+                const dateStr = new Date(item.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                const isExpired = item.expiresAt && Date.now() > item.expiresAt;
+                const displayStatus = isExpired ? '已过期' : (statusLabels[item.status] || item.status);
+                const displayColor = isExpired ? '#999' : statusColors[item.status];
+                return '<tr>' +
+                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace; letter-spacing: 0.5px;">' + item.code + '</td>' +
+                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0;"><span style="background: ' + displayColor + '; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">' + displayStatus + '</span></td>' +
+                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + expireText + '</td>' +
+                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + dateStr + '</td>' +
+                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; white-space: nowrap;">' +
+                        (item.status === 'active' ? '<button onclick="freezeAuthCode(\'' + item.code + '\')" style="background: #fdcb6e; color: #333; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 10px; margin-right: 2px;">冻结</button>' : '') +
+                        (item.status === 'frozen' ? '<button onclick="unfreezeAuthCode(\'' + item.code + '\')" style="background: #00b894; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 10px; margin-right: 2px;">解冻</button>' : '') +
+                        (item.status !== 'blacklisted' ? '<button onclick="blacklistAuthCode(\'' + item.code + '\')" style="background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 10px; margin-right: 2px;">拉黑</button>' : '') +
+                        '<button onclick="addAuthCodeTime(\'' + item.code + '\', 7)" style="background: #0984e3; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 10px; margin-right: 2px;">+7天</button>' +
+                        '<button onclick="addAuthCodeTime(\'' + item.code + '\', -7)" style="background: #e17055; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 10px; margin-right: 2px;">-7天</button>' +
+                        '<button onclick="deleteAuthCode(\'' + item.code + '\')" style="background: #636e72; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 10px;">删除</button>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function freezeAuthCode(code) {
+            const codes = getAuthCodes();
+            const item = codes.find(c => c.code === code);
+            if (item) { item.status = 'frozen'; saveAuthCodes(codes); renderAuthCodeTable(); }
+        }
+
+        function unfreezeAuthCode(code) {
+            const codes = getAuthCodes();
+            const item = codes.find(c => c.code === code);
+            if (item) { item.status = 'active'; saveAuthCodes(codes); renderAuthCodeTable(); }
+        }
+
+        function blacklistAuthCode(code) {
+            const codes = getAuthCodes();
+            const item = codes.find(c => c.code === code);
+            if (item) { item.status = 'blacklisted'; saveAuthCodes(codes); renderAuthCodeTable(); }
+        }
+
+        function addAuthCodeTime(code, days) {
+            const codes = getAuthCodes();
+            const item = codes.find(c => c.code === code);
+            if (!item) return;
+            if (!item.expiresAt) {
+                item.expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+            } else {
+                item.expiresAt += days * 24 * 60 * 60 * 1000;
+                if (item.expiresAt < Date.now()) item.expiresAt = Date.now();
+            }
+            saveAuthCodes(codes);
+            renderAuthCodeTable();
+        }
+
+        function deleteAuthCode(code) {
+            let codes = getAuthCodes();
+            codes = codes.filter(c => c.code !== code);
+            saveAuthCodes(codes);
+            renderAuthCodeTable();
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const errorEl = document.getElementById('loginError');
+            if (!username || !password) {
+                errorEl.textContent = '请输入用户名和密码';
+                errorEl.style.display = 'block';
+                return;
+            }
+            const accounts = getAccounts();
+            const user = accounts.find(a => a.username === username && a.password === password);
+            if (!user) {
+                errorEl.textContent = '用户名或密码错误';
+                errorEl.style.display = 'block';
+                return;
+            }
+            currentUser = user;
+            if (user.isAdmin) {
                 const adminBtn = document.getElementById('adminBtn');
                 if (adminBtn) adminBtn.style.display = 'block';
-                document.getElementById('loginOverlay').style.display = 'none';
-                return;
             }
-
-            const cards = getCards();
-            const card = cards.find(c => c.key === input && c.active);
-            if (!card) {
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
-                return;
-            }
-
-            if (card.type === 'count') {
-                if (card.remainingUses > 0) {
-                    card.remainingUses--;
-                    saveCards(cards);
-                    if (card.firstUsedAt === null) {
-                        card.firstUsedAt = Date.now();
-                        saveCards(cards);
-                    }
-                    document.getElementById('loginOverlay').style.display = 'none';
-                } else {
-                    document.getElementById('loginError').textContent = '该次卡已无剩余次数';
-                    document.getElementById('loginError').style.display = 'block';
-                    document.getElementById('passwordInput').value = '';
-                }
-                return;
-            }
-
-            if (card.expiresAt && Date.now() > card.expiresAt) {
-                document.getElementById('loginError').textContent = '该卡密已过期';
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
-                return;
-            }
-
-            if (card.firstUsedAt === null) {
-                card.firstUsedAt = Date.now();
-                if (card.type === 'day') {
-                    card.expiresAt = Date.now() + card.duration * 24 * 60 * 60 * 1000;
-                } else if (card.type === 'week') {
-                    card.expiresAt = Date.now() + card.duration * 24 * 60 * 60 * 1000;
-                } else if (card.type === 'month') {
-                    card.expiresAt = Date.now() + card.duration * 24 * 60 * 60 * 1000;
-                }
-                saveCards(cards);
-            }
-
             document.getElementById('loginOverlay').style.display = 'none';
         }
 
+        function handleRegister() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+            const authCode = document.getElementById('regAuthCode').value.trim();
+            const errorEl = document.getElementById('registerError');
+            const successEl = document.getElementById('registerSuccess');
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
+            if (!username || !password || !confirmPassword || !authCode) {
+                errorEl.textContent = '请填写所有字段';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (password !== confirmPassword) {
+                errorEl.textContent = '两次密码输入不一致';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (password.length < 4) {
+                errorEl.textContent = '密码长度至少4位';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (!validateAuthCode(authCode)) {
+                errorEl.textContent = '授权码无效、已过期或已被冻结';
+                errorEl.style.display = 'block';
+                return;
+            }
+            const accounts = getAccounts();
+            if (accounts.some(a => a.username === username)) {
+                errorEl.textContent = '用户名已存在';
+                errorEl.style.display = 'block';
+                return;
+            }
+            accounts.push({ username, password, isAdmin: false, createdAt: Date.now() });
+            saveAccounts(accounts);
+            successEl.textContent = '注册成功！请切换到登录页登录';
+            successEl.style.display = 'block';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirmPassword').value = '';
+            document.getElementById('regAuthCode').value = '';
+            setTimeout(() => switchLoginTab('login'), 1500);
+        }
+
         function getCards() {
-            try {
-                return JSON.parse(localStorage.getItem('healthCards') || '[]');
-            } catch { return []; }
+            try { return JSON.parse(localStorage.getItem('healthCards') || '[]'); } catch { return []; }
         }
 
         function saveCards(cards) {
@@ -754,17 +1029,12 @@
         function generateCard(type) {
             const cards = getCards();
             const quantity = parseInt(document.getElementById('cardQuantity').value) || 1;
-
             for (let i = 0; i < quantity; i++) {
                 let key;
-                do {
-                    key = generateCardKey();
-                } while (cards.some(c => c.key === key));
-
+                do { key = generateCardKey(); } while (cards.some(c => c.key === key));
                 const card = {
                     id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-                    key: key,
-                    type: type,
+                    key, type,
                     createdAt: Date.now(),
                     firstUsedAt: null,
                     expiresAt: null,
@@ -772,23 +1042,12 @@
                     remainingUses: null,
                     duration: null
                 };
-
-                if (type === 'day') {
-                    card.duration = 1;
-                } else if (type === 'week') {
-                    card.duration = 7;
-                } else if (type === 'month') {
-                    card.duration = 30;
-                } else if (type === 'count') {
-                    const uses = parseInt(document.getElementById('cardUsesCount').value) || 10;
-                    card.remainingUses = uses;
-                } else if (type === 'permanent') {
-                    card.expiresAt = null;
-                }
-
+                if (type === 'day') card.duration = 1;
+                else if (type === 'week') card.duration = 7;
+                else if (type === 'month') card.duration = 30;
+                else if (type === 'count') card.remainingUses = parseInt(document.getElementById('cardUsesCount').value) || 10;
                 cards.push(card);
             }
-
             saveCards(cards);
             renderCardTable();
         }
@@ -797,35 +1056,17 @@
             const tbody = document.getElementById('cardTableBody');
             if (!tbody) return;
             const cards = getCards();
-
             const typeLabels = { day: '天卡', week: '周卡', count: '次卡', month: '月卡', permanent: '永久卡' };
             const typeColors = { day: '#4ecdc4', week: '#45b7d1', count: '#f9ca24', month: '#6c5ce7', permanent: '#e17055' };
-
             tbody.innerHTML = cards.slice().reverse().map(card => {
                 let statusText, statusColor;
-                if (!card.active) {
-                    statusText = '已禁用';
-                    statusColor = '#999';
-                } else if (card.type === 'permanent') {
-                    statusText = '永久有效';
-                    statusColor = '#e17055';
-                } else if (card.type === 'count') {
-                    statusText = '剩余 ' + card.remainingUses + ' 次';
-                    statusColor = card.remainingUses > 0 ? '#f9ca24' : '#999';
-                } else if (card.expiresAt && Date.now() > card.expiresAt) {
-                    statusText = '已过期';
-                    statusColor = '#ff6b6b';
-                } else if (card.firstUsedAt) {
-                    const remaining = Math.ceil((card.expiresAt - Date.now()) / (24 * 60 * 60 * 1000));
-                    statusText = '剩余 ' + remaining + ' 天';
-                    statusColor = '#00b894';
-                } else {
-                    statusText = '未使用';
-                    statusColor = '#74b9ff';
-                }
-
+                if (!card.active) { statusText = '已禁用'; statusColor = '#999'; }
+                else if (card.type === 'permanent') { statusText = '永久有效'; statusColor = '#e17055'; }
+                else if (card.type === 'count') { statusText = '剩余 ' + card.remainingUses + ' 次'; statusColor = card.remainingUses > 0 ? '#f9ca24' : '#999'; }
+                else if (card.expiresAt && Date.now() > card.expiresAt) { statusText = '已过期'; statusColor = '#ff6b6b'; }
+                else if (card.firstUsedAt) { const r = Math.ceil((card.expiresAt - Date.now()) / (24 * 60 * 60 * 1000)); statusText = '剩余 ' + r + ' 天'; statusColor = '#00b894'; }
+                else { statusText = '未使用'; statusColor = '#74b9ff'; }
                 const dateStr = new Date(card.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-
                 return '<tr>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace; letter-spacing: 0.5px;">' + card.key + '</td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0;"><span style="background: ' + typeColors[card.type] + '; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">' + typeLabels[card.type] + '</span></td>' +
@@ -867,20 +1108,16 @@
                 if (c.expiresAt && now > c.expiresAt) return false;
                 return true;
             });
-
             const typeLabels = { day: '天卡', week: '周卡', count: '次卡', month: '月卡', permanent: '永久卡' };
             let text = '卡密\t类型\t状态\n';
             validCards.forEach(c => {
                 let status;
                 if (c.type === 'permanent') status = '永久有效';
                 else if (c.type === 'count') status = '可用' + c.remainingUses + '次';
-                else if (c.firstUsedAt) {
-                    const remaining = Math.ceil((c.expiresAt - Date.now()) / (24 * 60 * 60 * 1000));
-                    status = '剩余' + remaining + '天';
-                } else status = '未使用';
+                else if (c.firstUsedAt) { const r = Math.ceil((c.expiresAt - Date.now()) / (24 * 60 * 60 * 1000)); status = '剩余' + r + '天'; }
+                else status = '未使用';
                 text += c.key + '\t' + typeLabels[c.type] + '\t' + status + '\n';
             });
-
             const blob = new Blob(['\uFEFF' + text], { type: 'text/plain;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -897,11 +1134,62 @@
         function closeCardAdmin() {
             document.getElementById('cardAdminModal').style.display = 'none';
         }
+
+        function openAuthCodeAdmin() {
+            document.getElementById('authCodeAdminModal').style.display = 'flex';
+            renderAuthCodeTable();
+        }
+
+        function closeAuthCodeAdmin() {
+            document.getElementById('authCodeAdminModal').style.display = 'none';
+        }
+
+        function getSubAccounts() {
+            return getAccounts().filter(a => !a.isAdmin);
+        }
+
+        function renderAccountTable() {
+            const tbody = document.getElementById('accountTableBody');
+            if (!tbody) return;
+            const accounts = getSubAccounts();
+            if (accounts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #999;">暂无子账号</td></tr>';
+                return;
+            }
+            tbody.innerHTML = accounts.slice().reverse().map(acc => {
+                const dateStr = new Date(acc.createdAt).toLocaleString('zh-CN', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                return '<tr>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;">' + acc.username + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; color: #999; font-family: monospace;">' + '•'.repeat(acc.password.length) + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + dateStr + '</td>' +
+                    '<td style="padding: 8px 6px; border-bottom: 1px solid #f0f0f0;"><button onclick="deleteAccount(\'' + acc.username + '\')" style="background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 11px;">删除</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function deleteAccount(username) {
+            if (!confirm('确定要删除子账号 "' + username + '" 吗？')) return;
+            let accounts = getAccounts();
+            accounts = accounts.filter(a => a.username !== username);
+            saveAccounts(accounts);
+            renderAccountTable();
+        }
+
+        function openAccountAdmin() {
+            document.getElementById('accountAdminModal').style.display = 'flex';
+            renderAccountTable();
+        }
+
+        function closeAccountAdmin() {
+            document.getElementById('accountAdminModal').style.display = 'none';
+        }
     </script>
     <!-- 主内容界面 -->
     <div id="mainContent" class="min-w-full whitespace-nowrap overflow-x-auto">
         <div id="adminBtn" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 100;">
-            <button onclick="openCardAdmin()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">卡密管理</button>
+            <button onclick="openCardAdmin()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-right: 8px;">卡密管理</button>
+            <button onclick="openAuthCodeAdmin()" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-right: 8px;">主号管理</button>
+            <button onclick="openAccountAdmin()" style="background: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">子账号管理</button>
         </div>
         <div class="form-container">
             <form id="healthForm">
@@ -1729,8 +2017,8 @@
                     // 复制重要提醒（包含城市、编号、有效期）
                     function copyImportantNotice() {
                         const notice = '⚠️ 蜂鸟平台上传注意事项\n1️⃣ 保存到手机相册上传，请勿截图上传会被以非原件驳回\n2️⃣ 上传城市、编号、有效期与证件一致才能审核通过\n\n';
-                        // 获取城市、编号、有效期
-                        const city = '合肥';
+                        const cityInput = document.getElementById('city3');
+                        const city = cityInput ? cityInput.value.trim() || '合肥' : '合肥';
                         const number = document.getElementById('previewNumber3').textContent || document.getElementById('copyNumber3').textContent;
                         const expirationDate = document.getElementById('previewExpirationDate3').textContent || document.getElementById('copyExpirationDate3').textContent;
                         const content = notice + `📍 城市：${city}\n📝 编号：${number}\n📅 有效期：${expirationDate}`;
