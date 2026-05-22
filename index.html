@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>健康证明生成器</title>
+    <title>图片编辑器</title>
     <!-- 延迟加载非关键CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -637,7 +637,7 @@
     <!-- 登录/注册框 -->
     <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 10000; display: flex; justify-content: center; align-items: center;">
         <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%;">
-            <h2 style="margin-bottom: 5px; color: #333; font-size: 22px;">🔐 健康证明生成器</h2>
+            <h2 style="margin-bottom: 5px; color: #333; font-size: 22px;">🔐 图片编辑器</h2>
             <p style="color: #888; font-size: 12px; margin-bottom: 15px;">注册需要授权码，请联系管理员获取</p>
 
             <div style="display: flex; margin-bottom: 18px; border-bottom: 2px solid #eee;">
@@ -2804,7 +2804,7 @@
                 
 
                 <div class="flex space-x-2 flex-wrap gap-2 mt-2">
-                    <button type="submit" id="generateBtn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                    <button type="submit" id="generateBtn" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
                         <i class="fa fa-save"></i> 生成健康证明
                     </button>
                     <button type="button" id="saveToBackendBtn" onclick="saveToBackend()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
@@ -2825,10 +2825,10 @@
         <div class="preview-container" id="previewContainer">
             <!-- 预览框导出工具栏：sticky 吸顶、单行不换行 -->
             <div style="position: sticky; top: 0; z-index: 100; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px 10px; margin-bottom: 12px; display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.07); min-width: 0;">
-                <button id="exportButton1" style="flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#3b82f6; color:#fff; border:none; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <button id="exportButton1" style="display: none; flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#3b82f6; color:#fff; border:none; border-radius:6px; cursor:pointer; align-items:center; gap:4px;">
                     <i class="fa fa-download"></i> 导出证明1
                 </button>
-                <button id="exportButton2" style="flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#2563eb; color:#fff; border:none; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <button id="exportButton2" style="display: none; flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#2563eb; color:#fff; border:none; border-radius:6px; cursor:pointer; align-items:center; gap:4px;">
                     <i class="fa fa-download"></i> 导出江苏
                 </button>
                 <button id="exportButton" onclick="exportAllCertificates()" style="flex-shrink:0; white-space:nowrap; font-size:13px; padding:5px 12px; background:#7c3aed; color:#fff; border:none; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px;">
