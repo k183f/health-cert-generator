@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>图片编辑器</title>
+    <svg style="display:none;position:absolute;width:0;height:0;" xmlns="http://www.w3.org/2000/svg">
+        <filter id="paperTexture" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise" seed="2"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0.85   0 0 0 0 0.78   0 0 0 0 0.65   0 0 0 0.08 0" in="noise" result="coloredNoise"/>
+            <feBlend in="SourceGraphic" in2="coloredNoise" mode="multiply"/>
+        </filter>
+        <filter id="agedPaper" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04 0.06" numOctaves="5" result="noise" seed="5"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0.78   0 0 0 0 0.72   0 0 0 0 0.55   0 0 0 0.12 0" in="noise" result="color"/>
+            <feBlend in="SourceGraphic" in2="color" mode="multiply"/>
+        </filter>
+    </svg>
     <!-- 延迟加载非关键CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -11,6 +23,106 @@
         body { font-family: 'Noto Sans SC', sans-serif; padding: 1rem; }
         .form-container, .preview-container { padding: 1.5rem; margin-top: 1.5rem; display: block; }
         .result-container { display: none; }
+        .result-container.print-effect .health-certificate,
+        .result-container.print-effect .official-certificate {
+            box-shadow:
+                0 1px 1px rgba(0,0,0,0.04),
+                0 2px 4px rgba(0,0,0,0.06),
+                0 4px 12px rgba(0,0,0,0.08),
+                inset 0 0 0 1px rgba(0,0,0,0.04);
+            filter: contrast(0.96) brightness(1.03) saturate(0.85);
+            background: #faf6ed;
+            position: relative;
+            border-radius: 1px;
+            transform: rotate(-0.3deg);
+            transition: none;
+        }
+        .result-container.print-effect {
+            background: #d8d0c0;
+            box-shadow:
+                0 2px 4px rgba(0,0,0,0.08),
+                0 8px 24px rgba(0,0,0,0.12),
+                inset 0 0 60px rgba(0,0,0,0.06);
+            padding: 22px 20px 18px;
+            border-radius: 2px;
+        }
+        .result-container.print-effect .health-certificate p,
+        .result-container.print-effect .official-certificate p {
+            color: #3a3530;
+            text-shadow: 0 0 1px rgba(0,0,0,0.02);
+        }
+        .result-container.print-effect .health-certificate h3,
+        .result-container.print-effect .official-certificate h3 {
+            color: #2a2520;
+        }
+        .result-container.print-effect .health-certificate,
+        .result-container.print-effect .official-certificate {
+            border-radius: 1px;
+        }
+        .result-container.print-effect .health-certificate::before,
+        .result-container.print-effect .official-certificate::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 1px,
+                    rgba(139,119,90,0.03) 1px,
+                    rgba(139,119,90,0.03) 2px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+        .result-container.print-effect .health-certificate::after,
+        .result-container.print-effect .official-certificate::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(255,255,240,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(180,150,110,0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .result-container.print-effect .health-certificate p,
+        .result-container.print-effect .official-certificate p,
+        .result-container.print-effect .health-certificate span,
+        .result-container.print-effect .official-certificate span {
+            font-family: 'Times New Roman', '宋体', serif;
+            text-shadow:
+                0 0 0.3px rgba(60,50,40,0.1),
+                0.3px 0 0.3px rgba(60,50,40,0.05);
+        }
+        .result-container.print-effect .health-certificate h3,
+        .result-container.print-effect .official-certificate h3 {
+            font-family: 'Times New Roman', '黑体', serif;
+            text-shadow:
+                0 0 0.4px rgba(60,50,40,0.12),
+                0.4px 0 0.4px rgba(60,50,40,0.06);
+        }
+        @media print {
+            .result-container.print-effect {
+                background: white !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                transform: none !important;
+            }
+            .result-container.print-effect .health-certificate,
+            .result-container.print-effect .official-certificate {
+                filter: none !important;
+                background: white !important;
+                transform: none !important;
+                box-shadow: none !important;
+            }
+            .result-container.print-effect .health-certificate::before,
+            .result-container.print-effect .official-certificate::before,
+            .result-container.print-effect .health-certificate::after,
+            .result-container.print-effect .official-certificate::after {
+                display: none !important;
+            }
+        }
         
 
     </style>
@@ -1044,10 +1156,21 @@
         function validateAuthCode(code) {
             const codes = getAuthCodes();
             const found = codes.find(c => c.code === code);
-            if (!found) return false;
-            if (found.status !== 'active') return false;
-            if (found.expiresAt && Date.now() > found.expiresAt) return false;
-            return true;
+            if (found) {
+                if (found.status !== 'active') return false;
+                if (found.expiresAt && Date.now() > found.expiresAt) return false;
+                return true;
+            }
+            const cards = getCards();
+            const card = cards.find(c => c.key === code);
+            if (card && card.active) {
+                if (card.type === 'permanent') return true;
+                if (card.type === 'count') return card.remainingUses > 0;
+                if (card.expiresAt && Date.now() > card.expiresAt) return false;
+                if (card.firstUsedAt && card.expiresAt && Date.now() > card.expiresAt) return false;
+                return true;
+            }
+            return false;
         }
 
         function renderAuthCodeTable() {
@@ -1067,7 +1190,7 @@
                 const displayStatus = isExpired ? '已过期' : (statusLabels[item.status] || item.status);
                 const displayColor = isExpired ? '#999' : statusColors[item.status];
                 return '<tr>' +
-                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace; letter-spacing: 0.5px;">' + item.code + '</td>' +
+                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace; letter-spacing: 0.5px;">' + item.code + ' <button onclick="copyCardKey(\'' + item.code + '\')" style="background: #00b894; color: white; border: none; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 10px;">复制</button></td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0;"><span style="background: ' + displayColor + '; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">' + displayStatus + '</span></td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + expireText + '</td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + dateStr + '</td>' +
@@ -1208,11 +1331,9 @@
         }
 
         function generateCardKey() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let key = '';
             for (let i = 0; i < 12; i++) {
-                key += chars[Math.floor(Math.random() * chars.length)];
-                if (i === 3 || i === 7) key += '-';
+                key += Math.floor(Math.random() * 10);
             }
             return key;
         }
@@ -1259,13 +1380,23 @@
                 else { statusText = '未使用'; statusColor = '#74b9ff'; }
                 const dateStr = new Date(card.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
                 return '<tr>' +
-                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace; letter-spacing: 0.5px;">' + card.key + '</td>' +
+                    '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-family: monospace; letter-spacing: 0.5px;">' + card.key + ' <button onclick="copyCardKey(\'' + card.key + '\')" style="background: #00b894; color: white; border: none; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 10px;">复制</button></td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0;"><span style="background: ' + typeColors[card.type] + '; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">' + typeLabels[card.type] + '</span></td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; color: ' + statusColor + '; font-weight: bold;">' + statusText + '</td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0; font-size: 11px;">' + dateStr + '</td>' +
                     '<td style="padding: 6px; border-bottom: 1px solid #f0f0f0;"><button onclick="deleteCard(\'' + card.key + '\')" style="background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 11px;">删除</button></td>' +
                     '</tr>';
             }).join('');
+        }
+
+        function copyCardKey(key) {
+            const el = document.createElement('textarea');
+            el.value = key;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert('已复制: ' + key);
         }
 
         function deleteCard(key) {
@@ -1631,6 +1762,18 @@
             if (!el) { alert('无预览内容可打印'); return; }
             const win = window.open('', '_blank');
             win.document.write('<html><head><title>打印</title><style>body{margin:0}@page{size:auto;margin:10mm}</style></head><body>' + el.innerHTML + '</body></html>');
+            win.document.close();
+            setTimeout(function() { win.print(); win.close(); }, 500);
+        }
+
+        function printResultBox() {
+            const el = document.getElementById('resultContainer');
+            if (!el) { alert('无结果内容可打印'); return; }
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+            const style = document.querySelector('style').innerHTML;
+            const win = window.open('', '_blank');
+            win.document.write('<html><head><title>打印结果</title><style>body{margin:20px;font-family:serif;}@page{size:auto;margin:10mm}' + style + '</style></head><body>' + clone.innerHTML + '</body></html>');
             win.document.close();
             setTimeout(function() { win.print(); win.close(); }, 500);
         }
@@ -2799,6 +2942,108 @@
                                 <span class="ms-2 text-sm font-medium text-gray-700">预览框2印章</span>
                             </label>
                         </div>
+                        <div class="mt-2 pt-2 border-t border-gray-200">
+                            <div class="text-xs font-medium text-gray-500 mb-1">自定义位置</div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:20px;">X</span>
+                                <input type="range" id="sealPosX" value="70" min="0" max="100" style="flex:1;">
+                                <span id="sealPosXVal" style="font-size:11px;color:#666;width:24px;text-align:right;">70%</span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:20px;">Y</span>
+                                <input type="range" id="sealPosY" value="70" min="0" max="100" style="flex:1;">
+                                <span id="sealPosYVal" style="font-size:11px;color:#666;width:24px;text-align:right;">70%</span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:20px;">↻</span>
+                                <input type="range" id="sealRotate" value="0" min="-180" max="180" style="flex:1;">
+                                <span id="sealRotateVal" style="font-size:11px;color:#666;width:24px;text-align:right;">0°</span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:20px;">◐</span>
+                                <input type="range" id="sealOpacity" value="100" min="0" max="100" style="flex:1;">
+                                <span id="sealOpacityVal" style="font-size:11px;color:#666;width:24px;text-align:right;">100%</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-gray-200">
+                            <div class="text-xs font-medium text-gray-500 mb-1">高级自定义</div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">标题字</span>
+                                <input type="range" id="sealTextFontSize" value="110" min="50" max="200" style="flex:1;">
+                                <span id="sealTextFontSizeVal" style="font-size:11px;color:#666;width:30px;text-align:right;">110</span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">单位字</span>
+                                <input type="range" id="sealCompanyFontSize" value="120" min="60" max="220" style="flex:1;">
+                                <span id="sealCompanyFontSizeVal" style="font-size:11px;color:#666;width:30px;text-align:right;">120</span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">字距</span>
+                                <input type="range" id="sealSpacing" value="340" min="200" max="500" style="flex:1;">
+                                <span id="sealSpacingVal" style="font-size:11px;color:#666;width:30px;text-align:right;">340</span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">字体</span>
+                                <select id="sealFontFamily" style="flex:1;font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;">
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="SimSun">宋体</option>
+                                    <option value="SimHei">黑体</option>
+                                    <option value="KaiTi">楷体</option>
+                                    <option value="FangSong">仿宋</option>
+                                    <option value="Microsoft YaHei">微软雅黑</option>
+                                    <option value="serif">Serif</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">标题</span>
+                                <input type="text" id="sealTitleText" value="体检专用章" style="flex:1;font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;">
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">副标题</span>
+                                <input type="text" id="sealSubtitleText" value="" placeholder="副标题文字" style="flex:1;font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;">
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">编号</span>
+                                <input type="text" id="sealNumberText" value="" placeholder="编号内容" style="flex:1;font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;">
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span style="font-size:11px;color:#666;width:48px;">☆位置</span>
+                                <input type="range" id="sealStarY" value="0" min="-80" max="80" style="flex:1;">
+                                <span id="sealStarYVal" style="font-size:11px;color:#666;width:30px;text-align:right;">0</span>
+                            </div>
+                            <div class="flex flex-wrap gap-3 mb-1">
+                                <label style="font-size:11px;color:#666;display:flex;align-items:center;gap:3px;">
+                                    <input type="checkbox" id="sealTitleBold" checked> 标题加粗
+                                </label>
+                                <label style="font-size:11px;color:#666;display:flex;align-items:center;gap:3px;">
+                                    <input type="checkbox" id="sealSubtitleBold" checked> 副标题加粗
+                                </label>
+                                <label style="font-size:11px;color:#666;display:flex;align-items:center;gap:3px;">
+                                    <input type="checkbox" id="sealNumberBold" checked> 编号加粗
+                                </label>
+                            </div>
+                            <div class="flex flex-wrap gap-3 mb-1 pt-1 border-t border-gray-100">
+                                <label style="font-size:11px;color:#666;display:flex;align-items:center;gap:3px;">
+                                    <input type="checkbox" id="sealVintage"> 做旧仿真
+                                </label>
+                                <div id="sealVintageIntensityWrap" style="display:none;flex:1;flex-wrap:wrap;gap:4px;align-items:center;">
+                                    <span style="font-size:11px;color:#666;">强度</span>
+                                    <input type="range" id="sealVintageIntensity" value="50" min="10" max="100" style="flex:1;min-width:60px;">
+                                    <span id="sealVintageIntensityVal" style="font-size:11px;color:#666;width:24px;text-align:right;">50</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-3 mb-1">
+                                <label style="font-size:11px;color:#666;display:flex;align-items:center;gap:3px;">
+                                    <input type="checkbox" id="sealAntiFake"> 防伪线
+                                </label>
+                                <div id="sealAntiFakeWrap" style="display:none;flex:1;flex-wrap:wrap;gap:4px;align-items:center;">
+                                    <span style="font-size:11px;color:#666;">角度</span>
+                                    <input type="range" id="sealAntiFakeAngle" value="45" min="0" max="360" style="flex:1;min-width:60px;">
+                                    <span id="sealAntiFakeAngleVal" style="font-size:11px;color:#666;width:24px;text-align:right;">45°</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -2890,43 +3135,51 @@
             </div>
 
         </div>
-        <div class="result-container mt-8" id="resultContainer">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:4px;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555;user-select:none;">
+                    <input type="checkbox" id="printEffectToggle" onchange="togglePrintEffect(this.checked)" style="width:16px;height:16px;cursor:pointer;">
+                    <span>打印效果展示</span>
+                </label>
+            </div>
+        <div class="result-container mt-2" id="resultContainer">
             <div class="health-certificate bg-white p-4 rounded-md mb-4 shift-down">
                 <h3 class="text-lg font-bold text-center">江苏省从业人员预防性<br>健康检查合格证明</h3>
-                <p><strong>姓名:</strong> <span id="resultName"></span>&nbsp;&nbsp;&nbsp;<strong>性别:</strong> <span id="resultGender"></span>&nbsp;&nbsp;&nbsp;<strong>年龄:</strong> <span id="resultAge"></span>岁</p>
-                <p><strong>身份证:</strong> <span id="resultIdNumber"></span></p>
-                <p><strong>类 别:</strong> <span id="resultCategory"></span></p>
-                <p><strong>编 号:</strong> <span id="resultNumber"></span></p>
+                <p><strong>姓名:</strong> <span id="resultName" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span>&nbsp;&nbsp;&nbsp;<strong>性别:</strong> <span id="resultGender" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span>&nbsp;&nbsp;&nbsp;<strong>年龄:</strong> <span id="resultAge" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span>岁</p>
+                <p><strong>身份证:</strong> <span id="resultIdNumber" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>类 别:</strong> <span id="resultCategory" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>编 号:</strong> <span id="resultNumber" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
                 <p class="increase-spacing"><strong>体检机构:</strong> <span id="resultHospital" contenteditable="true" style="border-bottom: 1px solid #ccc; padding-bottom: 2px;"></span></p>
-                <p><strong>有效期至:</strong> <span id="resultExpirationDate"></span></p>
+                <p><strong>有效期至:</strong> <span id="resultExpirationDate" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
                 <div class="barcode-container" id="barcodeResult1" style="display: none;"><canvas class="barcode-canvas"></canvas></div>
                 <div class="seal-preview" id="resultSeal1"></div>
             </div>
             <div class="official-certificate bg-white p-4 rounded-md shift-down" style="margin-left: 0;">
                 <h3 class="text-lg font-bold text-white bg-blue-500 p-2 text-center" id="resultTitle2">江苏省从业人员健康检查合格证明</h3>
-                <p><strong>姓名:</strong> <span id="resultNameFull"></span>&nbsp;&nbsp;&nbsp;<strong>性别:</strong> <span id="resultGenderFull"></span>&nbsp;&nbsp;&nbsp;<strong>年龄:</strong> <span id="resultAgeFull"></span></p>
-                <p><strong>身份证:</strong> <span id="resultIdNumberFull"></span></p>
-                <p><strong>类 别:</strong> <span id="resultCategoryFull"></span></p>
-                <p><strong>编 号:</strong> <span id="resultNumberFull"></span></p>
+                <p><strong>姓名:</strong> <span id="resultNameFull" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span>&nbsp;&nbsp;&nbsp;<strong>性别:</strong> <span id="resultGenderFull" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span>&nbsp;&nbsp;&nbsp;<strong>年龄:</strong> <span id="resultAgeFull" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>身份证:</strong> <span id="resultIdNumberFull" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>类 别:</strong> <span id="resultCategoryFull" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>编 号:</strong> <span id="resultNumberFull" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
                 <p class="increase-spacing"><strong>体检机构:</strong> <span id="resultHospitalFull" contenteditable="true" style="border-bottom: 1px solid #ccc; padding-bottom: 2px;"></span></p>
                 <div class="barcode-container" id="barcodeResult2" style="display: none;"><canvas class="barcode-canvas"></canvas></div>
-                <p><strong>有效期:</strong> <span id="resultExpirationDateFull"></span></p>
+                <p><strong>有效期:</strong> <span id="resultExpirationDateFull" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
                 <div class="qr-preview" id="resultQr"></div>
                 <div class="photo-preview" id="resultPhoto"></div>
             </div>
             <div class="official-certificate bg-white p-4 rounded-md shift-down" style="margin-left: 0;">
                 <h3 class="text-lg font-bold text-white bg-green-500 p-2 text-center" id="resultTitle3">安徽省从业人员健康检查合格证明</h3>
-                <p><strong>姓名:</strong> <span id="resultName3"></span>&nbsp;&nbsp;&nbsp;<strong>性别:</strong> <span id="resultGender3"></span>&nbsp;&nbsp;&nbsp;<strong>年龄:</strong> <span id="resultAge3"></span></p>
-                <p><strong>身份证:</strong> <span id="resultIdNumber3"></span></p>
-                <p><strong>类 别:</strong> <span id="resultCategory3"></span></p>
-                <p><strong>编 号:</strong> <span id="resultNumber3"></span></p>
+                <p><strong>姓名:</strong> <span id="resultName3" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span>&nbsp;&nbsp;&nbsp;<strong>性别:</strong> <span id="resultGender3" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span>&nbsp;&nbsp;&nbsp;<strong>年龄:</strong> <span id="resultAge3" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>身份证:</strong> <span id="resultIdNumber3" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>类 别:</strong> <span id="resultCategory3" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
+                <p><strong>编 号:</strong> <span id="resultNumber3" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
                 <p class="increase-spacing"><strong>体检机构:</strong> <span id="resultHospital3" contenteditable="true" style="border-bottom: 1px solid #ccc; padding-bottom: 2px;"></span></p>
                 <div class="barcode-container" id="barcodeResult3" style="display: none;"><canvas class="barcode-canvas"></canvas></div>
-                <p><strong>有效期:</strong> <span id="resultExpirationDate3"></span></p>
+                <p><strong>有效期:</strong> <span id="resultExpirationDate3" contenteditable="true" style="border-bottom:1px dashed #ccc;padding-bottom:1px;"></span></p>
                 <div class="seal-preview" id="resultSeal3"></div>
                 <div class="photo-preview" id="resultPhoto3"></div>
             </div>
-
+            <div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+                <button onclick="printResultBox()" style="background:#2d3436;color:#fff;border:none;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:14px;">🖨️ 打印结果框</button>
+            </div>
         </div>
         
         
@@ -5469,11 +5722,8 @@
                 if (previewSeal3) {
                     previewSeal3.innerHTML = '<img src="' + dataURL + '" alt="">';
                     
-                    // 设置印章位置 - 调整到相片位置并往下移动，往左来一点
+                    // 设置印章位置（不覆盖滑块自定义值）
                     previewSeal3.style.position = 'absolute';
-                    previewSeal3.style.top = '100px';
-                    previewSeal3.style.right = '50px';
-                    previewSeal3.style.transform = 'none';
                     previewSeal3.style.zIndex = '20';
                     
                     // 根据屏幕宽度和用户设置设置印章大小
@@ -5491,6 +5741,9 @@
                         sealImg.style.height = '100%';
                         sealImg.style.objectFit = 'contain';
                     }
+                    
+                    // 应用滑块自定义样式
+                    updateSealCustomStyles();
                 }
                 
                 // 清理临时canvas
@@ -5526,9 +5779,6 @@
                     previewSeal2.style.display = isVisible ? 'block' : 'none';
 
                     previewSeal2.style.position = 'absolute';
-                    previewSeal2.style.top = '100px';
-                    previewSeal2.style.right = '50px';
-                    previewSeal2.style.transform = 'none';
                     previewSeal2.style.zIndex = '20';
 
                     var baseSize = window.innerWidth < 640 ? 120 : 180;
@@ -5544,6 +5794,9 @@
                         sealImg.style.height = '100%';
                         sealImg.style.objectFit = 'contain';
                     }
+                    
+                    // 应用滑块自定义样式
+                    updateSealCustomStyles();
                 }
 
                 document.body.removeChild(canvas);
@@ -5694,6 +5947,37 @@
             'previewQr1', 'previewQrFinal', 'resultQr'
         ], (value) => 200 - (value * 2));
         
+        // 印章自定义位置/旋转/透明度滑块
+        function updateSealCustomStyles() {
+            const posX = document.getElementById('sealPosX');
+            const posY = document.getElementById('sealPosY');
+            const rot = document.getElementById('sealRotate');
+            const opa = document.getElementById('sealOpacity');
+            if (!posX) return;
+            ['previewSeal1','resultSeal1','previewSeal2','previewSeal3','resultSeal3'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.left = posX.value + '%';
+                    el.style.top = posY.value + '%';
+                    el.style.transform = 'translate(-50%, -50%) rotate(' + rot.value + 'deg)';
+                    el.style.opacity = opa.value / 100;
+                }
+            });
+        }
+        ['sealPosX','sealPosY','sealRotate','sealOpacity'].forEach(id => {
+            const slider = document.getElementById(id);
+            if (slider) {
+                slider.addEventListener('input', function() {
+                    const valEl = document.getElementById(id + 'Val');
+                    if (valEl) {
+                        if (id === 'sealRotate') valEl.textContent = this.value + '°';
+                        else valEl.textContent = this.value + '%';
+                    }
+                    updateSealCustomStyles();
+                });
+            }
+        });
+        
         // 添加前缀后缀控制
         const addPrefixSuffixCheckbox = document.getElementById('addPrefixSuffix');
         const prefixSpan = document.getElementById('prefixSpan');
@@ -5725,6 +6009,98 @@
             addPrefixSuffixCheckbox.addEventListener('change', updatePrefixSuffix);
             // 初始化前缀后缀显示状态
             updatePrefixSuffix();
+        }
+        
+        // === 印章高级自定义事件绑定 ===
+        function regenerateSealAndSync() {
+            generateSeal();
+            // 同步结果框印章
+            setTimeout(function() {
+                const sealImg = document.querySelector('#previewSeal1 img');
+                if (sealImg) {
+                    ['resultSeal1'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) {
+                            el.innerHTML = sealImg.outerHTML;
+                            el.style.position = 'absolute';
+                            el.style.bottom = '50%';
+                            el.style.left = '50%';
+                            el.style.transform = 'translate(-50%, 50%)';
+                        }
+                    });
+                }
+                updateSealCustomStyles();
+            }, 100);
+        }
+        ['sealTextFontSize','sealCompanyFontSize','sealSpacing','sealStarY','sealVintageIntensity','sealAntiFakeAngle','sealFontFamily','sealTitleText','sealSubtitleText','sealNumberText','sealTitleBold','sealSubtitleBold','sealNumberBold','sealVintage','sealAntiFake'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                var evt = (el.type === 'checkbox' || el.tagName === 'SELECT') ? 'change' : 'input';
+                el.addEventListener(evt, function() {
+                    var valEl = document.getElementById(id + 'Val');
+                    if (valEl) {
+                        var suffix = (id === 'sealAntiFakeAngle') ? '°' : '';
+                        valEl.textContent = this.value + suffix;
+                    }
+                    if (id === 'sealVintage' || id === 'sealAntiFake') {
+                        var wrap = document.getElementById(id + 'IntensityWrap') || document.getElementById(id + 'Wrap');
+                        if (wrap) wrap.style.display = this.checked ? 'flex' : 'none';
+                    }
+                    regenerateSealAndSync();
+                });
+            }
+        });
+        
+        function togglePrintEffect(checked) {
+            var container = document.getElementById('resultContainer');
+            if (!container) return;
+            if (checked) {
+                container.classList.add('print-effect');
+                // 生成纸张纹理背景
+                var texCanvas = document.createElement('canvas');
+                texCanvas.width = 400;
+                texCanvas.height = 400;
+                var ctx = texCanvas.getContext('2d');
+                // 纸张底色
+                ctx.fillStyle = '#faf6ed';
+                ctx.fillRect(0, 0, 400, 400);
+                // 添加噪点纹理
+                var imgData = ctx.getImageData(0, 0, 400, 400);
+                var d = imgData.data;
+                for (var i = 0; i < d.length; i += 4) {
+                    var noise = (Math.random() - 0.5) * 18;
+                    d[i] += noise;
+                    d[i+1] += noise;
+                    d[i+2] += noise;
+                }
+                ctx.putImageData(imgData, 0, 0);
+                // 添加一些纤维纹理线条
+                for (var k = 0; k < 120; k++) {
+                    var x1 = Math.random() * 400, y1 = Math.random() * 400;
+                    ctx.strokeStyle = 'rgba(180,160,130,' + (Math.random() * 0.06 + 0.02) + ')';
+                    ctx.lineWidth = Math.random() * 1.2 + 0.3;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.bezierCurveTo(
+                        x1 + (Math.random()-0.5)*60, y1 + (Math.random()-0.5)*40,
+                        x1 + (Math.random()-0.5)*80, y1 + (Math.random()-0.5)*60,
+                        x1 + (Math.random()-0.5)*100, y1 + (Math.random()-0.5)*80
+                    );
+                    ctx.stroke();
+                }
+                // 添加边缘老化暗角
+                var grad = ctx.createRadialGradient(200, 200, 50, 200, 200, 280);
+                grad.addColorStop(0, 'rgba(0,0,0,0)');
+                grad.addColorStop(1, 'rgba(120,100,70,0.15)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 400, 400);
+                container.style.backgroundImage = 'url(' + texCanvas.toDataURL() + ')';
+                container.style.backgroundSize = '400px 400px';
+            } else {
+                container.classList.remove('print-effect');
+                container.style.backgroundImage = '';
+                container.style.backgroundSize = '';
+            }
         }
 
 
@@ -6084,13 +6460,25 @@
             context.imageSmoothingEnabled = true;
             context.imageSmoothingQuality = 'high';
             
-            // 印章参数
-    var sealTextSize = 110;
-    var sealCompanySize = 120;
+            // === 读取自定义参数 ===
+            var sealTextSize = parseInt((document.getElementById('sealTextFontSize') || {}).value) || 110;
+            var sealCompanySize = parseInt((document.getElementById('sealCompanyFontSize') || {}).value) || 120;
             var sealMargin = 450;
-            var sealSpacing = 340;
+            var sealSpacing = parseInt((document.getElementById('sealSpacing') || {}).value) || 340;
             var sealStarSize = 100;
             var sealCircleSize = 18;
+            var sealStarYOffset = parseInt((document.getElementById('sealStarY') || {}).value) || 0;
+            var sealTitleText = (document.getElementById('sealTitleText') || {}).value || name || '体检专用章';
+            var sealSubtitleText = (document.getElementById('sealSubtitleText') || {}).value || '';
+            var sealNumberText = (document.getElementById('sealNumberText') || {}).value || '';
+            var sealFontFamily = (document.getElementById('sealFontFamily') || {}).value || 'Helvetica';
+            var sealTitleBold = (document.getElementById('sealTitleBold') || {}).checked !== false;
+            var sealSubtitleBold = (document.getElementById('sealSubtitleBold') || {}).checked !== false;
+            var sealNumberBold = (document.getElementById('sealNumberBold') || {}).checked !== false;
+            var sealVintage = (document.getElementById('sealVintage') || {}).checked || false;
+            var sealVintageIntensity = parseInt((document.getElementById('sealVintageIntensity') || {}).value) || 50;
+            var sealAntiFake = (document.getElementById('sealAntiFake') || {}).checked || false;
+            var sealAntiFakeAngle = parseInt((document.getElementById('sealAntiFakeAngle') || {}).value) || 45;
             
             // 模拟打印过程中的物理偏移和抖动
             var printJitter = {
@@ -6119,11 +6507,12 @@
             context.arc(width, height, sealMargin - sealCircleSize/2 - 3, 0, Math.PI*2);
             context.stroke();
             
-            // 画五角星 - 使用油墨颜色和透明度
-            create5star(context, width, height, sealStarSize, "rgba(195, 20, 20, 0.85)", 0); 
+            // === 画五角星 ===
+            create5star(context, width, height + sealStarYOffset, sealStarSize, "rgba(195, 20, 20, 0.85)", 0); 
         
-            // 绘制印章名称 - 模拟打印文字效果
-            context.font = 'bold ' + sealTextSize + 'px Helvetica'; 
+            // === 绘制印章标题文字（如"体检专用章"）===
+            var titleFontWeight = sealTitleBold ? 'bold' : 'normal';
+            context.font = titleFontWeight + ' ' + sealTextSize + 'px ' + sealFontFamily; 
             context.textBaseline = 'middle';
             context.textAlign = 'center'; 
             context.lineWidth = 1.2; 
@@ -6134,7 +6523,23 @@
             context.shadowOffsetX = 0.5;
             context.shadowOffsetY = 0.5;
             context.fillStyle = 'rgba(195, 20, 20, 0.88)'; 
-            context.fillText(name, width, height + 230); 
+            context.fillText(sealTitleText, width, height + 230); 
+            
+            // === 绘制副标题 ===
+            if (sealSubtitleText) {
+                var subtitleFontWeight = sealSubtitleBold ? 'bold' : 'normal';
+                context.font = subtitleFontWeight + ' ' + Math.round(sealTextSize * 0.6) + 'px ' + sealFontFamily;
+                context.fillStyle = 'rgba(195, 20, 20, 0.85)';
+                context.fillText(sealSubtitleText, width, height + 340);
+            }
+            
+            // === 绘制编号 ===
+            if (sealNumberText) {
+                var numberFontWeight = sealNumberBold ? 'bold' : 'normal';
+                context.font = numberFontWeight + ' ' + Math.round(sealTextSize * 0.45) + 'px ' + sealFontFamily;
+                context.fillStyle = 'rgba(195, 20, 20, 0.8)';
+                context.fillText(sealNumberText, width, height + 410);
+            }
             
             // 清除阴影用于后续绘制
             context.shadowColor = "transparent";
@@ -6142,9 +6547,10 @@
             context.shadowOffsetX = 0;
             context.shadowOffsetY = 0;
         
-            // 绘制印章单位 - 模拟打印环形文字
+            // === 绘制印章单位 - 模拟打印环形文字 ===
             context.translate(width, height);
-            context.font = 'bold ' + sealCompanySize + 'px Helvetica'; 
+            var companyFontWeight = 'bold';
+            context.font = companyFontWeight + ' ' + sealCompanySize + 'px ' + sealFontFamily; 
             var count = company.length;
             var angle = 4*Math.PI/(3*(count - 1));
             var chars = company.split("");   
@@ -6169,7 +6575,31 @@
                 context.restore();              
             }
             
-            // 五角星绘制函数
+            // === 绘制防伪线 ===
+            if (sealAntiFake) {
+                var rad = sealAntiFakeAngle * Math.PI / 180;
+                var lineLen = sealMargin - sealCircleSize - 10;
+                var cosA = Math.cos(rad);
+                var sinA = Math.sin(rad);
+                context.save();
+                context.translate(0, 0);
+                context.strokeStyle = "rgba(195, 20, 20, 0.25)";
+                context.lineWidth = 1.5;
+                context.setLineDash([8, 12]);
+                context.beginPath();
+                context.moveTo(-lineLen * cosA, -lineLen * sinA);
+                context.lineTo(lineLen * cosA, lineLen * sinA);
+                context.stroke();
+                context.setLineDash([]);
+                context.restore();
+            }
+            
+            // === 做旧仿真效果 ===
+            if (sealVintage) {
+                applyVintageEffect(context, canvas.width, canvas.height, sealVintageIntensity);
+            }
+            
+            // === 五角星绘制函数 ===
             function create5star(context, sx, sy, radius, color, rotato) {
                 context.save();  
                 context.fillStyle = color;
@@ -6188,6 +6618,43 @@
                 context.stroke();
                 context.fill();  
                 context.restore();  
+            }
+            
+            // === 做旧仿真效果函数 ===
+            function applyVintageEffect(ctx, w, h, intensity) {
+                var imageData = ctx.getImageData(0, 0, w, h);
+                var data = imageData.data;
+                var factor = intensity / 100;
+                var noiseCount = Math.round(w * h * 0.15 * factor);
+                
+                // 添加噪点和墨迹斑点
+                for (var i = 0; i < noiseCount; i++) {
+                    var px = Math.floor(Math.random() * w);
+                    var py = Math.floor(Math.random() * h);
+                    var idx = (py * w + px) * 4;
+                    var noise = Math.random();
+                    if (noise < 0.02 * factor) {
+                        // 深色墨渍
+                        data[idx] = Math.max(0, data[idx] - Math.floor(Math.random() * 60));
+                        data[idx+1] = Math.max(0, data[idx+1] - Math.floor(Math.random() * 40));
+                        data[idx+2] = Math.max(0, data[idx+2] - Math.floor(Math.random() * 30));
+                    } else if (noise < 0.06 * factor) {
+                        // 浅色磨损
+                        data[idx] = Math.min(255, data[idx] + Math.floor(Math.random() * 40));
+                        data[idx+1] = Math.min(255, data[idx+1] + Math.floor(Math.random() * 30));
+                        data[idx+2] = Math.min(255, data[idx+2] + Math.floor(Math.random() * 20));
+                    }
+                }
+                
+                // 添加微妙的整体泛黄/老化
+                for (var i = 0; i < data.length; i += 4) {
+                    if (data[i+3] > 0) {
+                        data[i] = Math.min(255, data[i] + Math.floor(5 * factor));
+                        data[i+1] = Math.max(0, data[i+1] - Math.floor(3 * factor));
+                    }
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
             }
         }
         
@@ -6234,11 +6701,8 @@
                 // 添加到印章容器
                 previewSeal1.appendChild(sealImg);
                 
-                // 设置印章位置
+                // 设置印章位置（不覆盖滑块自定义值）
                 previewSeal1.style.position = 'absolute';
-                previewSeal1.style.bottom = '30%';
-                previewSeal1.style.left = '70%';
-                previewSeal1.style.transform = 'translate(-50%, 50%)';
                 previewSeal1.style.zIndex = '20';
                 
                 // 根据屏幕宽度和用户设置设置印章大小
@@ -6249,6 +6713,9 @@
                 previewSeal1.style.width = sealSize;
                 previewSeal1.style.height = sealSize;
             }
+            
+            // 应用滑块自定义样式
+            updateSealCustomStyles();
             
             // 清理临时canvas
             document.body.removeChild(canvas);
