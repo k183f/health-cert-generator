@@ -905,6 +905,25 @@
                 <p id="registerSuccess" style="color: #00b894; font-size: 13px; display: none;"></p>
             </div>
         </div>
+
+            <div style="margin-top: 16px; border-top: 2px dashed #dfe6e9; padding-top: 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h3 style="font-size:14px;color:#636e72;margin:0;">🎫 一次性账号（共100个）</h3>
+                    <button onclick="refreshOneTimeCodes()" style="background:#0984e3;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;">刷新列表</button>
+                </div>
+                <div style="max-height:250px;overflow-y:auto;border:1px solid #eee;border-radius:8px;font-size:11px;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#dfe6e9;position:sticky;top:0;">
+                                <th style="padding:6px 4px;text-align:left;border-bottom:1px solid #eee;">账号</th>
+                                <th style="padding:6px 4px;text-align:left;border-bottom:1px solid #eee;">密码</th>
+                                <th style="padding:6px 4px;text-align:left;border-bottom:1px solid #eee;">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="oneTimeCodeTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
     </div>
 
     <!-- 卡密管理后台弹窗 -->
@@ -1221,6 +1240,38 @@
             }
         }
         initAdminAccount();
+        
+        // 一次性账号管理系统
+        function getUsedAccounts() {
+            try { return JSON.parse(localStorage.getItem('healthUsedAccounts') || '[]'); } catch { return []; }
+        }
+        function saveUsedAccounts(list) {
+            localStorage.setItem('healthUsedAccounts', JSON.stringify(list));
+        }
+        function markAccountUsed(username) {
+            var list = getUsedAccounts();
+            if (!list.includes(username)) {
+                list.push(username);
+                saveUsedAccounts(list);
+            }
+        }
+        function isAccountExpired(username) {
+            return getUsedAccounts().includes(username);
+        }
+
+        function initOneTimeAccounts() {
+            var accounts = getAccounts();
+            var existingGuests = accounts.filter(function(a) { return a.username.startsWith('a') && /^a\d+$/.test(a.username); }).length;
+            if (existingGuests >= 100) return;
+            // 移除旧的a开头一次性账号重新生成
+            accounts = accounts.filter(function(a) { return !(/^a\d+$/.test(a.username)); });
+            for (var i = 1; i <= 100; i++) {
+                var uname = 'a' + i;
+                accounts.push({ username: uname, password: '123', isAdmin: false, isOneTime: true, createdAt: Date.now() });
+            }
+            saveAccounts(accounts);
+        }
+        initOneTimeAccounts();
 
         function getAuthCodes() {
             try { return JSON.parse(localStorage.getItem('healthAuthCodes') || '[]'); } catch { return []; }
@@ -1251,6 +1302,10 @@
             var accounts = getAccounts();
             var user = accounts.find(function(a) { return a.username === savedUsername; });
             if (!user) return;
+            if (user.isOneTime && isAccountExpired(savedUsername)) {
+                localStorage.removeItem('healthCurrentUser');
+                return;
+            }
             currentUser = user;
             if (user.isAdmin) {
                 var adminBtn = document.getElementById('adminBtn');
@@ -1412,8 +1467,14 @@
                 errorEl.style.display = 'block';
                 return;
             }
+            if (user.isOneTime && isAccountExpired(username)) {
+                errorEl.textContent = '该账号已过期，无法再次使用';
+                errorEl.style.display = 'block';
+                return;
+            }
             currentUser = user;
             localStorage.setItem('healthCurrentUser', user.username);
+            if (user.isOneTime) markAccountUsed(username);
             if (user.isAdmin) {
                 const adminBtn = document.getElementById('adminBtn');
                 if (adminBtn) adminBtn.style.display = 'block';
@@ -1641,6 +1702,32 @@
             }).join('');
         }
 
+        function renderOneTimeCodes() {
+            var tbody = document.getElementById('oneTimeCodeTableBody');
+            if (!tbody) return;
+            var accounts = getAccounts().filter(function(a) { return a.isOneTime; });
+            if (accounts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding:16px;text-align:center;color:#999;">暂无一次性账号</td></tr>';
+                return;
+            }
+            var used = getUsedAccounts();
+            tbody.innerHTML = accounts.map(function(acc) {
+                var expired = used.includes(acc.username);
+                var statusHtml = expired
+                    ? '<span style="color:#ff6b6b;font-weight:bold;">已过期</span>'
+                    : '<span style="color:#00b894;font-weight:bold;">未使用</span>';
+                return '<tr>' +
+                    '<td style="padding:6px 4px;border-bottom:1px solid #f0f0f0;font-family:monospace;">' + acc.username + '</td>' +
+                    '<td style="padding:6px 4px;border-bottom:1px solid #f0f0f0;font-family:monospace;color:#636e72;">' + acc.password + '</td>' +
+                    '<td style="padding:6px 4px;border-bottom:1px solid #f0f0f0;">' + statusHtml + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function refreshOneTimeCodes() {
+            renderOneTimeCodes();
+        }
+
         function deleteAccount(username) {
             if (!confirm('确定要删除子账号 "' + username + '" 吗？')) return;
             let accounts = getAccounts();
@@ -1652,6 +1739,7 @@
         function openAccountAdmin() {
             document.getElementById('accountAdminModal').style.display = 'flex';
             renderAccountTable();
+            renderOneTimeCodes();
         }
 
         function closeAccountAdmin() {
