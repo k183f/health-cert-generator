@@ -410,6 +410,120 @@
         }
 
         /* 确保长文本在移动设备上正确换行 */
+
+        /* 图片属性调节弹窗 */
+        .photo-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .photo-modal-overlay.active {
+            display: flex;
+        }
+        .photo-modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            width: 320px;
+            max-width: 90vw;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+            animation: modalFadeIn 0.2s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .photo-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .photo-modal-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        .photo-modal-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.15s;
+        }
+        .photo-modal-close:hover {
+            background: #e5e7eb;
+            color: #333;
+        }
+        .photo-modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .photo-modal-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .photo-modal-row label {
+            font-size: 13px;
+            color: #555;
+            width: 50px;
+            flex-shrink: 0;
+        }
+        .photo-modal-row input[type="range"] {
+            flex: 1;
+            height: 4px;
+            accent-color: #0891b2;
+        }
+        .photo-modal-row .value-display {
+            font-size: 12px;
+            color: #999;
+            width: 36px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .photo-modal-body .photo-modal-row input[type="number"] {
+            width: 60px;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .photo-modal-reset {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px;
+            border: 1px dashed #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+            cursor: pointer;
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .photo-modal-reset:hover {
+            background: #f3f4f6;
+            color: #555;
+            border-color: #ccc;
+        }
         @media (max-width: 640px) {
             .health-certificate p,
             .official-certificate p {
@@ -1129,6 +1243,26 @@
             }
         }
         initDefaultAuthCode();
+        
+        // 自动登录（记住上次登录，无需重复输入密码）
+        (function autoLogin() {
+            var savedUsername = localStorage.getItem('healthCurrentUser');
+            if (!savedUsername) return;
+            var accounts = getAccounts();
+            var user = accounts.find(function(a) { return a.username === savedUsername; });
+            if (!user) return;
+            currentUser = user;
+            if (user.isAdmin) {
+                var adminBtn = document.getElementById('adminBtn');
+                if (adminBtn) adminBtn.style.display = 'block';
+            }
+            var topBar = document.getElementById('topBar');
+            if (topBar) topBar.style.display = 'flex';
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = '👤 ' + user.username + (user.isAdmin ? '（总号）' : '');
+            document.getElementById('loginOverlay').style.display = 'none';
+            addLog('自动登录', user.username + (user.isAdmin ? '（总号）' : ''));
+        })();
 
         function generateAuthCodeKey() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1279,6 +1413,7 @@
                 return;
             }
             currentUser = user;
+            localStorage.setItem('healthCurrentUser', user.username);
             if (user.isAdmin) {
                 const adminBtn = document.getElementById('adminBtn');
                 if (adminBtn) adminBtn.style.display = 'block';
@@ -2764,8 +2899,11 @@
                         const textarea = document.createElement('textarea');
                         textarea.value = text;
                         textarea.style.position = 'fixed';
+                        textarea.style.top = '-9999px';
+                        textarea.style.left = '-9999px';
                         textarea.style.opacity = '0';
                         document.body.appendChild(textarea);
+                        textarea.focus();
                         textarea.select();
                         try {
                             document.execCommand('copy');
@@ -2824,8 +2962,11 @@
                         const textarea = document.createElement('textarea');
                         textarea.value = text;
                         textarea.style.position = 'fixed';
+                        textarea.style.top = '-9999px';
+                        textarea.style.left = '-9999px';
                         textarea.style.opacity = '0';
                         document.body.appendChild(textarea);
+                        textarea.focus();
                         textarea.select();
                         try {
                             document.execCommand('copy');
@@ -3211,6 +3352,50 @@
         
     </div>
     </div>
+
+    <!-- 图片属性调节弹窗 -->
+    <div class="photo-modal-overlay" id="photoModalOverlay" onclick="closePhotoModal(event)">
+        <div class="photo-modal" onclick="event.stopPropagation()">
+            <div class="photo-modal-header">
+                <h3>🖼️ 图片属性调节</h3>
+                <button class="photo-modal-close" onclick="closePhotoModal()">✕</button>
+            </div>
+            <div class="photo-modal-body">
+                <div class="photo-modal-row">
+                    <label>宽度</label>
+                    <input type="range" id="photoWidthSlider" min="30" max="200" value="100">
+                    <span class="value-display" id="photoWidthVal">100</span>
+                </div>
+                <div class="photo-modal-row">
+                    <label>高度</label>
+                    <input type="range" id="photoHeightSlider" min="40" max="280" value="140">
+                    <span class="value-display" id="photoHeightVal">140</span>
+                </div>
+                <div class="photo-modal-row">
+                    <label>旋转</label>
+                    <input type="range" id="photoRotateSlider" min="-180" max="180" value="0">
+                    <span class="value-display" id="photoRotateVal">0°</span>
+                </div>
+                <div class="photo-modal-row">
+                    <label>不透明</label>
+                    <input type="range" id="photoOpacitySlider" min="20" max="100" value="100">
+                    <span class="value-display" id="photoOpacityVal">100%</span>
+                </div>
+                <div class="photo-modal-row">
+                    <label>圆角</label>
+                    <input type="range" id="photoRadiusSlider" min="0" max="50" value="0">
+                    <span class="value-display" id="photoRadiusVal">0px</span>
+                </div>
+                <div class="photo-modal-row">
+                    <label>亮度</label>
+                    <input type="range" id="photoBrightnessSlider" min="50" max="150" value="100">
+                    <span class="value-display" id="photoBrightnessVal">100%</span>
+                </div>
+                <button class="photo-modal-reset" onclick="resetPhotoProperties()">↺ 重置属性</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.8.4/lib/qr-code-styling.js"></script>
     <!-- 主CDN -->
@@ -3505,8 +3690,9 @@
             }, 200));
         }
         
-        // 导出结果框为JPG
+        // 导出结果框为JPG（手机端导出为TXT文件）
         function exportResultCard(index) {
+            var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobi/i.test(navigator.userAgent);
             var container = document.getElementById('resultContainer');
             if (!container) return;
             var cards = container.children;
@@ -3516,7 +3702,58 @@
             }
             var card = cards[index - 1];
             var titles = ['健康检查合格证明', '江苏省从业人员健康检查合格证明', '安徽省从业人员健康检查合格证明'];
-            var filename = '结果框' + index + '_' + (titles[index - 1] || '证明') + '_' + new Date().toISOString().slice(0, 10) + '.jpg';
+            var titleText = titles[index - 1] || '证明';
+
+            if (isMobile) {
+                // 手机端：导出为TXT文件
+                var fields = {};
+                var textElements = card.querySelectorAll('p');
+                textElements.forEach(function(p) {
+                    var strong = p.querySelector('strong');
+                    if (strong) {
+                        var label = strong.textContent.replace(/[:\s]/g, '').trim();
+                        var textNode = p.childNodes[p.childNodes.length - 1];
+                        var value = textNode ? textNode.textContent.trim() : '';
+                        fields[label] = value;
+                    }
+                });
+                var h3 = card.querySelector('h3');
+                var cardTitle = h3 ? h3.textContent.trim() : titleText;
+                var now = new Date();
+                var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+                var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+                var content = '═══════════════════════════════════\n';
+                content += '  ' + cardTitle + '\n';
+                content += '═══════════════════════════════════\n\n';
+                content += '  导出日期: ' + dateStr + ' ' + timeStr + '\n\n';
+                content += '───────────────────────────────────\n';
+                if (fields['姓名']) content += '  姓    名: ' + fields['姓名'] + '\n';
+                if (fields['性别']) content += '  性    别: ' + fields['性别'] + '\n';
+                if (fields['年龄']) content += '  年    龄: ' + fields['年龄'] + '\n';
+                if (fields['身份证']) content += '  身份证号: ' + fields['身份证'] + '\n';
+                if (fields['类别']) content += '  类    别: ' + fields['类别'] + '\n';
+                if (fields['编号']) content += '  编    号: ' + fields['编号'] + '\n';
+                if (fields['有效期']) content += '  有效期至: ' + fields['有效期'] + '\n';
+                if (fields['有效期至']) content += '  有效期至: ' + fields['有效期至'] + '\n';
+                if (fields['体检机构']) content += '  体检机构: ' + fields['体检机构'] + '\n';
+                content += '───────────────────────────────────\n\n';
+                content += '  注: 此文件为数据导出记录，\n';
+                content += '  不作为正式证明文件使用。\n\n';
+                content += '═══════════════════════════════════\n';
+                var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                var filename = 'downloadfile_' + dateStr + '.txt';
+                var link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                return;
+            }
+
+            // 桌面端：导出为JPG
+            var filename = '结果框' + index + '_' + titleText + '_' + new Date().toISOString().slice(0, 10) + '.jpg';
 
             function doCapture() {
                 if (typeof html2canvas === 'undefined') {
@@ -6179,11 +6416,136 @@
             }
         }
 
+        // 图片属性调节弹窗
+        var currentPhotoElement = null;
 
+        function openPhotoModal(element) {
+            currentPhotoElement = element;
+            var overlay = document.getElementById('photoModalOverlay');
+            if (!overlay) return;
+            var img = element.querySelector('img');
+            if (!img) return;
 
+            // 读取当前样式值填充滑块
+            var w = parseInt(element.style.width) || 100;
+            var h = parseInt(element.style.height) || 140;
+            var rotate = 0, opacity = 100, radius = 0, brightness = 100;
 
+            var transform = element.style.transform || '';
+            if (transform) {
+                var match = transform.match(/rotate\(([-\d.]+)deg\)/);
+                if (match) rotate = parseFloat(match[1]);
+            }
+            if (element.style.opacity) opacity = Math.round(parseFloat(element.style.opacity) * 100);
+            if (element.style.borderRadius) radius = parseInt(element.style.borderRadius);
+            if (img.style.filter) {
+                var bMatch = img.style.filter.match(/brightness\(([\d.]+)\)/);
+                if (bMatch) brightness = Math.round(parseFloat(bMatch[1]) * 100);
+            }
 
+            document.getElementById('photoWidthSlider').value = w;
+            document.getElementById('photoWidthVal').textContent = w;
+            document.getElementById('photoHeightSlider').value = h;
+            document.getElementById('photoHeightVal').textContent = h;
+            document.getElementById('photoRotateSlider').value = rotate;
+            document.getElementById('photoRotateVal').textContent = rotate + '°';
+            document.getElementById('photoOpacitySlider').value = opacity;
+            document.getElementById('photoOpacityVal').textContent = opacity + '%';
+            document.getElementById('photoRadiusSlider').value = radius;
+            document.getElementById('photoRadiusVal').textContent = radius + 'px';
+            document.getElementById('photoBrightnessSlider').value = brightness;
+            document.getElementById('photoBrightnessVal').textContent = brightness + '%';
 
+            overlay.classList.add('active');
+        }
+
+        function closePhotoModal(e) {
+            if (e && e.target !== e.currentTarget) return;
+            var overlay = document.getElementById('photoModalOverlay');
+            if (overlay) overlay.classList.remove('active');
+            currentPhotoElement = null;
+        }
+
+        function applyPhotoProperty(sliderId, displayId, callback) {
+            var slider = document.getElementById(sliderId);
+            var display = document.getElementById(displayId);
+            if (!slider || !display) return;
+            slider.addEventListener('input', function() {
+                var val = parseFloat(this.value);
+                callback(val);
+            });
+        }
+
+        function updatePhotoTransform() {
+            if (!currentPhotoElement) return;
+            var img = currentPhotoElement.querySelector('img');
+            if (!img) return;
+            var w = parseFloat(document.getElementById('photoWidthSlider').value);
+            var h = parseFloat(document.getElementById('photoHeightSlider').value);
+            var rot = parseFloat(document.getElementById('photoRotateSlider').value);
+            var op = parseFloat(document.getElementById('photoOpacitySlider').value) / 100;
+            var rad = parseFloat(document.getElementById('photoRadiusSlider').value);
+            var bright = parseFloat(document.getElementById('photoBrightnessSlider').value) / 100;
+
+            currentPhotoElement.style.width = w + 'px';
+            currentPhotoElement.style.height = h + 'px';
+            currentPhotoElement.style.transform = 'rotate(' + rot + 'deg)';
+            currentPhotoElement.style.opacity = op;
+            currentPhotoElement.style.borderRadius = rad + 'px';
+            img.style.filter = 'brightness(' + bright + ')';
+        }
+
+        function resetPhotoProperties() {
+            document.getElementById('photoWidthSlider').value = 100;
+            document.getElementById('photoWidthVal').textContent = '100';
+            document.getElementById('photoHeightSlider').value = 140;
+            document.getElementById('photoHeightVal').textContent = '140';
+            document.getElementById('photoRotateSlider').value = 0;
+            document.getElementById('photoRotateVal').textContent = '0°';
+            document.getElementById('photoOpacitySlider').value = 100;
+            document.getElementById('photoOpacityVal').textContent = '100%';
+            document.getElementById('photoRadiusSlider').value = 0;
+            document.getElementById('photoRadiusVal').textContent = '0px';
+            document.getElementById('photoBrightnessSlider').value = 100;
+            document.getElementById('photoBrightnessVal').textContent = '100%';
+            updatePhotoTransform();
+        }
+
+        // 绑定滑块事件
+        document.addEventListener('DOMContentLoaded', function() {
+            applyPhotoProperty('photoWidthSlider', 'photoWidthVal', function(v) {
+                document.getElementById('photoWidthVal').textContent = v;
+                updatePhotoTransform();
+            });
+            applyPhotoProperty('photoHeightSlider', 'photoHeightVal', function(v) {
+                document.getElementById('photoHeightVal').textContent = v;
+                updatePhotoTransform();
+            });
+            applyPhotoProperty('photoRotateSlider', 'photoRotateVal', function(v) {
+                document.getElementById('photoRotateVal').textContent = v + '°';
+                updatePhotoTransform();
+            });
+            applyPhotoProperty('photoOpacitySlider', 'photoOpacityVal', function(v) {
+                document.getElementById('photoOpacityVal').textContent = v + '%';
+                updatePhotoTransform();
+            });
+            applyPhotoProperty('photoRadiusSlider', 'photoRadiusVal', function(v) {
+                document.getElementById('photoRadiusVal').textContent = v + 'px';
+                updatePhotoTransform();
+            });
+            applyPhotoProperty('photoBrightnessSlider', 'photoBrightnessVal', function(v) {
+                document.getElementById('photoBrightnessVal').textContent = v + '%';
+                updatePhotoTransform();
+            });
+
+            // 点击图片打开属性调节弹窗
+            document.addEventListener('click', function(e) {
+                var target = e.target.closest('.photo-preview');
+                if (target && target.querySelector('img')) {
+                    openPhotoModal(target);
+                }
+            });
+        });
 
         fontFamilySelect.addEventListener('change', function () {
             previewContainer.style.fontFamily = this.value;
