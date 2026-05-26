@@ -3294,13 +3294,16 @@
 
         </div>
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:4px;">
-                <button onclick="exportResultCard(1)" style="flex-shrink:0;white-space:nowrap;font-size:13px;padding:5px 10px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                <button onclick="resetAll()" style="flex-shrink:0;white-space:nowrap;font-size:13px;padding:5px 10px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                    <i class="fa fa-refresh"></i> 初始化
+                </button>
+                <button onclick="exportResultCard(1, event)" style="flex-shrink:0;white-space:nowrap;font-size:13px;padding:5px 10px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
                     <i class="fa fa-download"></i> 结果1
                 </button>
-                <button onclick="exportResultCard(2)" style="flex-shrink:0;white-space:nowrap;font-size:13px;padding:5px 10px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                <button onclick="exportResultCard(2, event)" style="flex-shrink:0;white-space:nowrap;font-size:13px;padding:5px 10px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
                     <i class="fa fa-download"></i> 结果2
                 </button>
-                <button onclick="exportResultCard(3)" style="flex-shrink:0;white-space:nowrap;font-size:13px;padding:5px 10px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                <button onclick="exportResultCard(3, event)" style="flex-shrink:0;white-space:nowrap;font-size:13px;padding:5px 10px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
                     <i class="fa fa-download"></i> 结果3
                 </button>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555;user-select:none;">
@@ -3691,7 +3694,123 @@
         }
         
         // 导出结果框为JPG（手机端导出为TXT文件）
-        function exportResultCard(index) {
+        // 初始化全部内容
+        function resetAll() {
+            if (!confirm('确定要初始化所有内容吗？所有已填写的数据将被清除。')) return;
+
+            // 清空表单输入
+            var formInputs = document.querySelectorAll('#healthForm input[type="text"], #healthForm input[type="date"], #healthForm select');
+            formInputs.forEach(function(el) {
+                if (el.tagName === 'SELECT') {
+                    el.selectedIndex = 0;
+                } else if (el.id === 'category') {
+                    el.value = '食品及相关类';
+                } else {
+                    el.value = '';
+                }
+            });
+
+            // 清空手动输入机构
+            var customInputs = ['hospital1Custom', 'hospital2Custom', 'hospital3Custom'];
+            customInputs.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            // 清空内容可编辑字段
+            var editableFields = document.querySelectorAll('[contenteditable="true"]');
+            editableFields.forEach(function(el) {
+                el.textContent = '';
+            });
+
+            // 清空预览编号/有效期显示
+            var previewSpans = ['previewNumber', 'previewNumberFull', 'previewNumber3',
+                'previewExpirationDate', 'previewExpirationDateFull', 'previewExpirationDate3',
+                'previewName', 'previewNameFull', 'previewName3',
+                'previewGender', 'previewGenderFull', 'previewGender3',
+                'previewAge', 'previewAgeFull', 'previewAge3',
+                'previewIdNumber', 'previewIdNumberFull', 'previewIdNumber3',
+                'previewCategory', 'previewCategoryFull', 'previewCategory3',
+                'previewHospital', 'previewHospitalFull', 'previewHospital3',
+                'copyNumber3', 'copyExpirationDate3'];
+            previewSpans.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = '';
+            });
+
+            // 清除照片
+            var photoContainers = ['previewPhoto', 'previewPhoto1', 'previewResultPhoto', 'resultPhoto', 'previewPhoto3', 'resultPhoto3'];
+            photoContainers.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '';
+                    el.style.display = '';
+                }
+            });
+
+            // 清除二维码
+            var qrContainers = ['previewQr1', 'previewQrFinal', 'resultQr'];
+            qrContainers.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.innerHTML = '';
+            });
+
+            // 清除条形码
+            var barcodeContainers = ['barcodePreview1', 'barcodePreview2', 'barcodePreview3',
+                'barcodeResult1', 'barcodeResult2', 'barcodeResult3'];
+            barcodeContainers.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '';
+                    el.style.display = 'none';
+                }
+            });
+
+            // 重置印章滑块
+            var sealSliders = ['sealPosX', 'sealPosY', 'sealRotate', 'sealOpacity',
+                'sealTextFontSize', 'sealCompanyFontSize', 'sealSpacing', 'sealStarY'];
+            var sealDefaults = { sealPosX: 70, sealPosY: 70, sealRotate: 0, sealOpacity: 100,
+                sealTextFontSize: 110, sealCompanyFontSize: 120, sealSpacing: 340, sealStarY: 0 };
+            sealSliders.forEach(function(id) {
+                var slider = document.getElementById(id);
+                if (slider) {
+                    slider.value = sealDefaults[id] || 0;
+                    var valDisplay = document.getElementById(id + 'Val');
+                    if (valDisplay) valDisplay.textContent = slider.value;
+                }
+            });
+
+            // 重置印章标题文字
+            var titleInputs = ['sealTitleText', 'sealSubtitleText', 'sealNumberText',
+                'sealTitleText2', 'sealSubtitleText2', 'sealNumberText2'];
+            titleInputs.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            // 重置字体选择
+            var fontSelect = document.getElementById('fontFamilySelect');
+            if (fontSelect) fontSelect.selectedIndex = 0;
+
+            // 关闭打印效果
+            var printToggle = document.getElementById('printEffectToggle');
+            if (printToggle) {
+                printToggle.checked = false;
+                togglePrintEffect(false);
+            }
+
+            // 重置图片调节弹窗状态
+            var photoModal = document.getElementById('photoModalOverlay');
+            if (photoModal) photoModal.classList.remove('active');
+
+            // 重新生成预览
+            if (typeof updatePreview === 'function') updatePreview();
+            if (typeof regenerateSealAndSync === 'function') regenerateSealAndSync();
+
+            showToast('已全部初始化');
+        }
+
+        function exportResultCard(index, event) {
             var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobi/i.test(navigator.userAgent);
             var container = document.getElementById('resultContainer');
             if (!container) return;
@@ -3754,12 +3873,37 @@
 
             // 桌面端：导出为JPG
             var filename = '结果框' + index + '_' + titleText + '_' + new Date().toISOString().slice(0, 10) + '.jpg';
+            var retryCount = 0;
+            var maxRetries = 30;
+            var exportBtn = event && event.target ? event.target.closest('button') : null;
+
+            function showLoading() {
+                if (!exportBtn) return;
+                var origText = exportBtn.innerHTML;
+                exportBtn.dataset.origText = origText;
+                exportBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 导出中...';
+                exportBtn.disabled = true;
+            }
+
+            function hideLoading() {
+                if (!exportBtn) return;
+                var orig = exportBtn.dataset.origText;
+                if (orig) exportBtn.innerHTML = orig;
+                exportBtn.disabled = false;
+            }
 
             function doCapture() {
                 if (typeof html2canvas === 'undefined') {
+                    retryCount++;
+                    if (retryCount > maxRetries) {
+                        hideLoading();
+                        alert('html2canvas库加载失败，请刷新页面后重试');
+                        return;
+                    }
                     setTimeout(doCapture, 200);
                     return;
                 }
+                showLoading();
                 html2canvas(card, {
                     scale: 2,
                     useCORS: true,
@@ -3771,8 +3915,10 @@
                     link.download = filename;
                     link.href = canvas.toDataURL('image/jpeg', 0.95);
                     link.click();
+                    hideLoading();
                 }).catch(function(error) {
                     console.error('导出结果框' + index + '失败:', error);
+                    hideLoading();
                     alert('导出失败: ' + error.message);
                 });
             }
