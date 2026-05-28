@@ -906,7 +906,7 @@
             </div>
         </div>
 
-            <div style="margin-top: 16px; border-top: 2px dashed #dfe6e9; padding-top: 16px;">
+            <div style="margin-top: 16px; border-top: 2px dashed #dfe6e9; padding-top: 16px; display: none;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                     <h3 style="font-size:14px;color:#636e72;margin:0;">🎫 一次性账号（共100个）</h3>
                     <button onclick="refreshOneTimeCodes()" style="background:#0984e3;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;">刷新列表</button>
@@ -3231,7 +3231,7 @@
                             <div class="flex items-center gap-2 mb-1">
                                 <span style="font-size:11px;color:#666;width:48px;">字体</span>
                                 <select id="sealFontFamily" style="flex:1;font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;">
-                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Helvetica" selected>Helvetica</option>
                                     <option value="Arial">Arial</option>
                                     <option value="SimSun">宋体</option>
                                     <option value="SimHei">黑体</option>
@@ -5801,12 +5801,12 @@
                 // 优先使用qr-code-styling库生成更美观的二维码
                 if (typeof QRCodeStyling !== 'undefined') {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 120;
-                    canvas.height = 120;
+                    canvas.width = 180;
+                    canvas.height = 180;
                     
                     const qrCode = new QRCodeStyling({
-                        width: 120,
-                        height: 120,
+                        width: 180,
+                        height: 180,
                         data: data,
                         margin: 4,
                         qrOptions: {
@@ -6086,9 +6086,8 @@
                 previewQrFinal.innerHTML = qrImg;
                 const qrImgElement = previewQrFinal.querySelector('img');
                 if (qrImgElement) {
-                    // 设置合适的二维码大小
-                    qrImgElement.style.width = '120px';
-                    qrImgElement.style.height = '120px';
+                    qrImgElement.style.width = '180px';
+                    qrImgElement.style.height = '180px';
                 }
             }
             
@@ -6098,6 +6097,18 @@
                 right: 10px;
                 transform: none;
             `;
+            
+            // 为预览框1生成二维码
+            if (previewQr1.dataset.customQr !== 'true') {
+                const qrData1 = `${name}|${id_number}|${displayNumber}|${expiration_date}|江苏省|${hospital1}|${category}`;
+                const qrImg1 = generateQRCodeWithData(qrData1);
+                previewQr1.innerHTML = qrImg1;
+                const qrImgElement1 = previewQr1.querySelector('img');
+                if (qrImgElement1) {
+                    qrImgElement1.style.width = '180px';
+                    qrImgElement1.style.height = '180px';
+                }
+            }
             
             // 生成条形码
             generateAllBarcodes();
@@ -6240,8 +6251,8 @@
             if (hospital) {
                 // 创建一个canvas元素用于生成印章
                 var canvas = document.createElement('canvas');
-                canvas.width = 1000;
-                canvas.height = 1000;
+                canvas.width = 1200;
+                canvas.height = 1200;
                 canvas.id = 'sealCanvas3';
                 canvas.style.display = 'none';
                 document.body.appendChild(canvas);
@@ -7058,8 +7069,8 @@
                 resultQr.innerHTML = qrImg;
                 const qrImgElement = resultQr.querySelector('img');
                 if (qrImgElement) {
-                    qrImgElement.style.width = '120px';
-                    qrImgElement.style.height = '120px';
+                    qrImgElement.style.width = '180px';
+                    qrImgElement.style.height = '180px';
                 }
                 resultQr.style.position = 'absolute';
                 resultQr.style.bottom = '10px';
@@ -7128,17 +7139,16 @@
             var canvas = document.getElementById(id);  
             var context = canvas.getContext('2d'); 
             
-            // 模拟真实打印机的分辨率和墨迹效果
             context.imageSmoothingEnabled = true;
             context.imageSmoothingQuality = 'high';
             
             // === 读取自定义参数 ===
             var sealTextSize = parseInt((document.getElementById('sealTextFontSize') || {}).value) || 110;
             var sealCompanySize = parseInt((document.getElementById('sealCompanyFontSize') || {}).value) || 120;
-            var sealMargin = 450;
+            var sealMargin = 440;
             var sealSpacing = parseInt((document.getElementById('sealSpacing') || {}).value) || 340;
-            var sealStarSize = 100;
-            var sealCircleSize = 18;
+            var sealStarSize = 150;
+            var sealCircleSize = 28;
             var sealStarYOffset = parseInt((document.getElementById('sealStarY') || {}).value) || 0;
             var sealTitleText = (document.getElementById('sealTitleText') || {}).value || name || '体检专用章';
             var sealSubtitleText = (document.getElementById('sealSubtitleText') || {}).value || '';
@@ -7152,99 +7162,99 @@
             var sealAntiFake = (document.getElementById('sealAntiFake') || {}).checked || false;
             var sealAntiFakeAngle = parseInt((document.getElementById('sealAntiFakeAngle') || {}).value) || 45;
             
-            // 模拟打印过程中的物理偏移和抖动
-            var printJitter = {
-                x: (Math.random() - 0.5) * 1.5,
-                y: (Math.random() - 0.5) * 1.5,
-                angle: (Math.random() - 0.5) * 0.003
-            };
+            var width = canvas.width/2;
+            var height = canvas.height/2;
             
-            var width = canvas.width/2 + printJitter.x; 
-            var height = canvas.height/2 + printJitter.y;
-            
-            // 模拟真实印章的油墨效果 - 使用渐变和半透明
-            // 外圈边框 - 模拟打印时墨迹的不均匀渗透
-            context.lineWidth = sealCircleSize; 
-            context.strokeStyle = "rgba(195, 20, 20, 0.8)"; 
+            // === 外圈主边框 ===
+            context.lineWidth = sealCircleSize;
+            context.strokeStyle = "rgba(200, 35, 35, 0.78)";
             context.lineCap = 'round';
             context.lineJoin = 'round';
-            context.beginPath(); 
-            context.arc(width, height, sealMargin, 0, Math.PI*2); 
-            context.stroke(); 
-            
-            // 添加第二层边框模拟真实印章的双线效果，但更淡
-            context.lineWidth = 2;
-            context.strokeStyle = "rgba(195, 20, 20, 0.3)";
             context.beginPath();
-            context.arc(width, height, sealMargin - sealCircleSize/2 - 3, 0, Math.PI*2);
+            context.arc(width, height, sealMargin, 0, Math.PI*2);
+            context.stroke();
+            
+            // === 内圈细边（模拟双线效果）===
+            context.lineWidth = 1.5;
+            context.strokeStyle = "rgba(200, 35, 35, 0.35)";
+            context.beginPath();
+            context.arc(width, height, sealMargin - sealCircleSize/2 - 4, 0, Math.PI*2);
             context.stroke();
             
             // === 画五角星 ===
-            create5star(context, width, height + sealStarYOffset, sealStarSize, "rgba(195, 20, 20, 0.85)", 0); 
-        
-            // === 绘制印章标题文字（如"体检专用章"）===
-            var titleFontWeight = sealTitleBold ? 'bold' : 'normal';
-            context.font = titleFontWeight + ' ' + sealTextSize + 'px ' + sealFontFamily; 
-            context.textBaseline = 'middle';
-            context.textAlign = 'center'; 
-            context.lineWidth = 1.2; 
+            create5star(context, width, height + sealStarYOffset, sealStarSize, "rgba(200, 35, 35, 0.82)", 0);
             
-            // 模拟墨迹晕染效果 - 添加轻微阴影
-            context.shadowColor = "rgba(195, 20, 20, 0.4)";
-            context.shadowBlur = 2;
-            context.shadowOffsetX = 0.5;
-            context.shadowOffsetY = 0.5;
-            context.fillStyle = 'rgba(195, 20, 20, 0.88)'; 
-            context.fillText(sealTitleText, width, height + 230); 
+            // === 绘制印章标题 ===
+            var titleFontWeight = sealTitleBold ? 'bold' : 'normal';
+            context.font = titleFontWeight + ' ' + sealTextSize + 'px ' + sealFontFamily;
+            context.textBaseline = 'middle';
+            context.textAlign = 'center';
+            context.shadowColor = "rgba(200, 35, 35, 0.35)";
+            context.shadowBlur = 1.5;
+            context.shadowOffsetX = 0.3;
+            context.shadowOffsetY = 0.3;
+            context.fillStyle = 'rgba(200, 35, 35, 0.85)';
+            context.fillText(sealTitleText, width, height + 220);
             
             // === 绘制副标题 ===
             if (sealSubtitleText) {
                 var subtitleFontWeight = sealSubtitleBold ? 'bold' : 'normal';
-                context.font = subtitleFontWeight + ' ' + Math.round(sealTextSize * 0.6) + 'px ' + sealFontFamily;
-                context.fillStyle = 'rgba(195, 20, 20, 0.85)';
-                context.fillText(sealSubtitleText, width, height + 340);
+                context.font = subtitleFontWeight + ' ' + Math.round(sealTextSize * 0.55) + 'px ' + sealFontFamily;
+                context.shadowColor = "rgba(200, 35, 35, 0.3)";
+                context.fillStyle = 'rgba(200, 35, 35, 0.82)';
+                context.fillText(sealSubtitleText, width, height + 325);
             }
             
             // === 绘制编号 ===
             if (sealNumberText) {
                 var numberFontWeight = sealNumberBold ? 'bold' : 'normal';
-                context.font = numberFontWeight + ' ' + Math.round(sealTextSize * 0.45) + 'px ' + sealFontFamily;
-                context.fillStyle = 'rgba(195, 20, 20, 0.8)';
-                context.fillText(sealNumberText, width, height + 410);
+                context.font = numberFontWeight + ' ' + Math.round(sealTextSize * 0.42) + 'px ' + sealFontFamily;
+                context.shadowColor = "rgba(200, 35, 35, 0.25)";
+                context.fillStyle = 'rgba(200, 35, 35, 0.78)';
+                context.fillText(sealNumberText, width, height + 395);
             }
             
-            // 清除阴影用于后续绘制
+            // 清除阴影
             context.shadowColor = "transparent";
             context.shadowBlur = 0;
             context.shadowOffsetX = 0;
             context.shadowOffsetY = 0;
-        
-            // === 绘制印章单位 - 模拟打印环形文字 ===
+            
+            // === 绘制弧形单位文字（上半弧，从左往右，不重叠）===
             context.translate(width, height);
             var companyFontWeight = 'bold';
-            context.font = companyFontWeight + ' ' + sealCompanySize + 'px ' + sealFontFamily; 
-            var count = company.length;
-            var angle = 4*Math.PI/(3*(count - 1));
-            var chars = company.split("");   
-            var c; 
-            for (var i = 0; i < count; i++){ 
-                c = chars[i];
-                // 每个字符的随机打印偏移，模拟真实打印的不完美
-                var charJitter = (Math.random() - 0.5) * 0.8;
-                var charAngleJitter = (Math.random() - 0.5) * 0.002;
-                
-                if(i==0) 
-                    context.rotate(5*Math.PI/6 + charJitter * 0.01 + charAngleJitter); 
-                else 
-                    context.rotate(angle + charJitter * 0.01 + charAngleJitter); 
-                context.save(); 
+            var adjustedFontSize = sealCompanySize;
+            var chars = company.split("");
+            var count = chars.length;
+            
+            var avgCharWidth = adjustedFontSize * 0.62;
+            var totalTextWidth = avgCharWidth * count;
+            var minArcAngle = totalTextWidth / sealSpacing;
+            var arcSpan = Math.min(4.188, minArcAngle * 2.2);
+            arcSpan = Math.max(2.094, arcSpan);
+            
+            if (arcSpan >= 4.0) {
+                adjustedFontSize = Math.floor(sealCompanySize * 3.8 / (minArcAngle * 2.2));
+                adjustedFontSize = Math.max(60, adjustedFontSize);
+            }
+            context.font = companyFontWeight + ' ' + adjustedFontSize + 'px ' + sealFontFamily;
+            var avgCharWidth2 = adjustedFontSize * 0.62;
+            var totalTextWidth2 = avgCharWidth2 * count;
+            var minArcAngle2 = totalTextWidth2 / sealSpacing;
+            arcSpan = Math.min(4.188, minArcAngle2 * 2.2);
+            arcSpan = Math.max(2.094, arcSpan);
+            
+            var startAngle = 3*Math.PI/2 - arcSpan/2;
+            var stepAngle = arcSpan / (count - 1);
+            
+            for (var i = 0; i < count; i++){
+                context.save();
+                context.rotate(startAngle + i * stepAngle);
                 context.translate(sealSpacing, 0);
                 context.rotate(Math.PI/2);
-                
-                // 绘制字符，使用半透明模拟墨迹
-                context.fillStyle = 'rgba(195, 20, 20, 0.88)';
-                context.fillText(c, 0, 15);
-                context.restore();              
+                context.fillStyle = 'rgba(200, 35, 35, 0.85)';
+                context.fillText(chars[i], 0, 15);
+                context.restore();
             }
             
             // === 绘制防伪线 ===
@@ -7255,9 +7265,9 @@
                 var sinA = Math.sin(rad);
                 context.save();
                 context.translate(0, 0);
-                context.strokeStyle = "rgba(195, 20, 20, 0.25)";
-                context.lineWidth = 1.5;
-                context.setLineDash([8, 12]);
+                context.strokeStyle = "rgba(200, 35, 35, 0.22)";
+                context.lineWidth = 1.2;
+                context.setLineDash([6, 14]);
                 context.beginPath();
                 context.moveTo(-lineLen * cosA, -lineLen * sinA);
                 context.lineTo(lineLen * cosA, lineLen * sinA);
@@ -7266,63 +7276,69 @@
                 context.restore();
             }
             
-            // === 做旧仿真效果 ===
+            // === 做旧仿真 ===
             if (sealVintage) {
                 applyVintageEffect(context, canvas.width, canvas.height, sealVintageIntensity);
             }
             
-            // === 五角星绘制函数 ===
+            // === 五角星绘制（更大更立体）===
             function create5star(context, sx, sy, radius, color, rotato) {
-                context.save();  
-                context.fillStyle = color;
+                context.save();
+                var grad = context.createRadialGradient(sx, sy - radius*0.15, 0, sx, sy, radius*1.4);
+                grad.addColorStop(0, 'rgba(230, 60, 60, 0.95)');
+                grad.addColorStop(0.5, 'rgba(200, 35, 35, 0.85)');
+                grad.addColorStop(1, 'rgba(160, 20, 20, 0.70)');
+                context.shadowColor = 'rgba(160, 20, 20, 0.6)';
+                context.shadowBlur = 25;
+                context.shadowOffsetX = 2;
+                context.shadowOffsetY = 3;
                 context.translate(sx, sy);
                 context.rotate(Math.PI + rotato);
                 context.beginPath();
-                var x = Math.sin(0);  
-                var y = Math.cos(0);  
-                var dig = Math.PI/5 * 4;  
+                var dig = Math.PI/5 * 4;
                 for (var i = 0; i < 5; i++) {
-                    x = Math.sin(i*dig);  
-                    y = Math.cos(i*dig);  
-                    context.lineTo(x*radius, y*radius);  
-                }   
+                    var x = Math.sin(i*dig);
+                    var y = Math.cos(i*dig);
+                    context.lineTo(x*radius, y*radius);
+                }
                 context.closePath();
+                context.fillStyle = grad;
+                context.fill();
+                context.shadowColor = 'transparent';
+                context.shadowBlur = 0;
+                context.strokeStyle = 'rgba(180, 30, 30, 0.5)';
+                context.lineWidth = 2;
                 context.stroke();
-                context.fill();  
-                context.restore();  
+                context.restore();
             }
             
-            // === 做旧仿真效果函数 ===
+            // === 做旧效果 ===
             function applyVintageEffect(ctx, w, h, intensity) {
                 var imageData = ctx.getImageData(0, 0, w, h);
                 var data = imageData.data;
                 var factor = intensity / 100;
-                var noiseCount = Math.round(w * h * 0.15 * factor);
+                var noiseCount = Math.round(w * h * 0.12 * factor);
                 
-                // 添加噪点和墨迹斑点
                 for (var i = 0; i < noiseCount; i++) {
                     var px = Math.floor(Math.random() * w);
                     var py = Math.floor(Math.random() * h);
                     var idx = (py * w + px) * 4;
                     var noise = Math.random();
                     if (noise < 0.02 * factor) {
-                        // 深色墨渍
-                        data[idx] = Math.max(0, data[idx] - Math.floor(Math.random() * 60));
-                        data[idx+1] = Math.max(0, data[idx+1] - Math.floor(Math.random() * 40));
-                        data[idx+2] = Math.max(0, data[idx+2] - Math.floor(Math.random() * 30));
-                    } else if (noise < 0.06 * factor) {
-                        // 浅色磨损
-                        data[idx] = Math.min(255, data[idx] + Math.floor(Math.random() * 40));
-                        data[idx+1] = Math.min(255, data[idx+1] + Math.floor(Math.random() * 30));
-                        data[idx+2] = Math.min(255, data[idx+2] + Math.floor(Math.random() * 20));
+                        data[idx] = Math.max(0, data[idx] - Math.floor(Math.random() * 50));
+                        data[idx+1] = Math.max(0, data[idx+1] - Math.floor(Math.random() * 35));
+                        data[idx+2] = Math.max(0, data[idx+2] - Math.floor(Math.random() * 25));
+                    } else if (noise < 0.05 * factor) {
+                        data[idx] = Math.min(255, data[idx] + Math.floor(Math.random() * 35));
+                        data[idx+1] = Math.min(255, data[idx+1] + Math.floor(Math.random() * 25));
+                        data[idx+2] = Math.min(255, data[idx+2] + Math.floor(Math.random() * 15));
                     }
                 }
                 
-                // 添加微妙的整体泛黄/老化
                 for (var i = 0; i < data.length; i += 4) {
                     if (data[i+3] > 0) {
-                        data[i] = Math.min(255, data[i] + Math.floor(5 * factor));
-                        data[i+1] = Math.max(0, data[i+1] - Math.floor(3 * factor));
+                        data[i] = Math.min(255, data[i] + Math.floor(4 * factor));
+                        data[i+1] = Math.max(0, data[i+1] - Math.floor(2 * factor));
                     }
                 }
                 
@@ -7334,8 +7350,8 @@
         function generateSeal() {
             // 创建一个canvas元素用于生成印章
             var canvas = document.createElement('canvas');
-            canvas.width = 1000;
-            canvas.height = 1000;
+            canvas.width = 1200;
+            canvas.height = 1200;
             canvas.id = 'sealCanvas';
             canvas.style.display = 'none';
             document.body.appendChild(canvas);
