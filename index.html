@@ -2542,7 +2542,11 @@
                                 <option value="安徽医科大学第一附属医院">安徽医科大学第一附属医院</option>
                                 <option value="安徽医科大学第二附属医院">安徽医科大学第二附属医院</option>
                                 <option value="合肥市第一人民医院">合肥市第一人民医院</option>
-                                <option value="合肥市第二人民医院" selected>合肥市第二人民医院</option>
+                                <option value="合肥市疾病预防控制中心" selected>合肥市疾病预防控制中心</option>
+                                <option value="合肥市第二人民医院">合肥市第二人民医院</option>
+                                <option value="合肥市第三人民医院">合肥市第三人民医院</option>
+                                <option value="合肥市第四人民医院">合肥市第四人民医院</option>
+                                <option value="合肥市第五人民医院">合肥市第五人民医院</option>
                                 </optgroup>
                                 <optgroup label="芜湖市">
                                 <option value="皖南医学院弋矶山医院">皖南医学院弋矶山医院</option>
@@ -2724,147 +2728,6 @@
                     });
                 </script>
 
-                /* 可复制项目区域样式 */
-                .copyable-section {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    border-radius: 12px;
-                    overflow: hidden;
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-                    margin-bottom: 16px;
-                }
-                
-                .copyable-section-header {
-                    background: rgba(255, 255, 255, 0.15);
-                    padding: 12px 16px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    cursor: pointer;
-                    transition: background 0.3s ease;
-                }
-                
-                .copyable-section-header:hover {
-                    background: rgba(255, 255, 255, 0.25);
-                }
-                
-                .copyable-section-header h3 {
-                    color: white;
-                    font-weight: 600;
-                    font-size: 16px;
-                    margin: 0;
-                }
-                
-                .copyable-section-content {
-                    background: white;
-                    padding: 16px;
-                }
-                
-                .important-notice {
-                    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
-                    border-radius: 10px;
-                    padding: 16px;
-                    margin-bottom: 16px;
-                    position: relative;
-                    overflow: hidden;
-                }
-                
-                .important-notice::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-                    pointer-events: none;
-                }
-                
-                .important-notice-title {
-                    color: white;
-                    font-weight: 700;
-                    font-size: 14px;
-                    margin-bottom: 10px;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-                
-                .important-notice-item {
-                    color: white;
-                    font-size: 12px;
-                    padding: 6px 0;
-                    padding-left: 20px;
-                    position: relative;
-                    opacity: 0.95;
-                }
-                
-                .important-notice-item::before {
-                    content: '●';
-                    position: absolute;
-                    left: 0;
-                    font-size: 8px;
-                    top: 8px;
-                }
-                
-                .project-card {
-                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                    border: 2px solid #e2e8f0;
-                    border-radius: 12px;
-                    padding: 16px;
-                    cursor: pointer;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                
-                .project-card:hover {
-                    border-color: #10b981;
-                    transform: translateY(-2px);
-                    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
-                }
-                
-                .project-card:active {
-                    transform: translateY(0);
-                }
-                
-                .project-card.copied {
-                    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-                    border-color: #10b981;
-                }
-                
-                .project-city {
-                    color: #059669;
-                    font-weight: 700;
-                    font-size: 16px;
-                    margin-bottom: 6px;
-                }
-                
-                .project-info {
-                    font-size: 11px;
-                    color: #64748b;
-                    margin: 3px 0;
-                }
-                
-                .copy-button {
-                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                    color: white;
-                    padding: 10px 16px;
-                    border-radius: 8px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-                }
-                
-                .project-card:hover .copy-button {
-                    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-                }
-
                 /* 可复制项目区域 */
                 <div class="copyable-section">
                     <div class="copyable-section-header" onclick="toggleCopyableSection()">
@@ -2888,7 +2751,6 @@
                         </div>
                         <!-- 项目卡片区域 -->
                         <div>
-                            <!-- 项目1：合肥 -->
                             <div class="project-card" onclick="copyProject(this, '合肥', document.getElementById('previewNumber3').textContent, document.getElementById('previewExpirationDate3').textContent)">
                                 <div>
                                     <div class="project-city">📍 城市：合肥</div>
@@ -5801,12 +5663,12 @@
                 // 优先使用qr-code-styling库生成更美观的二维码
                 if (typeof QRCodeStyling !== 'undefined') {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 180;
-                    canvas.height = 180;
+                    canvas.width = 120;
+                    canvas.height = 120;
                     
                     const qrCode = new QRCodeStyling({
-                        width: 180,
-                        height: 180,
+                        width: 120,
+                        height: 120,
                         data: data,
                         margin: 4,
                         qrOptions: {
@@ -6086,8 +5948,8 @@
                 previewQrFinal.innerHTML = qrImg;
                 const qrImgElement = previewQrFinal.querySelector('img');
                 if (qrImgElement) {
-                    qrImgElement.style.width = '180px';
-                    qrImgElement.style.height = '180px';
+                    qrImgElement.style.width = '120px';
+                    qrImgElement.style.height = '120px';
                 }
             }
             
@@ -6105,8 +5967,8 @@
                 previewQr1.innerHTML = qrImg1;
                 const qrImgElement1 = previewQr1.querySelector('img');
                 if (qrImgElement1) {
-                    qrImgElement1.style.width = '180px';
-                    qrImgElement1.style.height = '180px';
+                    qrImgElement1.style.width = '120px';
+                    qrImgElement1.style.height = '120px';
                 }
             }
             
@@ -7069,8 +6931,8 @@
                 resultQr.innerHTML = qrImg;
                 const qrImgElement = resultQr.querySelector('img');
                 if (qrImgElement) {
-                    qrImgElement.style.width = '180px';
-                    qrImgElement.style.height = '180px';
+                    qrImgElement.style.width = '120px';
+                    qrImgElement.style.height = '120px';
                 }
                 resultQr.style.position = 'absolute';
                 resultQr.style.bottom = '10px';
